@@ -3,14 +3,13 @@ package bot.inputData;
 import bot.database.EventsTable;
 
 import java.sql.SQLException;
-import java.util.HashMap;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Класс-контейнер. Хранит в себе мероприятия, которые еще не были загружены в базу данных.
  * После загрузки в базу мероприятие удаляется отсюда.
  */
-public class Events
+class Events
 {
     /**
      * Метод определения мероприятия
@@ -35,7 +34,7 @@ public class Events
                 event.setUniversity(param);
                 break;
             case (Functions.B013):      // тематика
-                event.setTheme(param);
+                event.setType(param);
                 break;
             case (Functions.B014):      // ссылка на фотографию
                 event.setPhotoRef(param);
@@ -93,63 +92,100 @@ public class Events
 }
 
 
-class Event
+// todo подумать насчет downloadToDatabase
+public class Event
 {
+    Event()
+    {
+        params = new String[PARAM_NUMBER];
+    }
+
+    public Event(String[] params)
+    {
+        if (params.length == PARAM_NUMBER)
+        {
+            this.params = params;
+        }
+    }
+
+    String[] getEventDescription()
+    {
+        return params;
+    }
+
+    public int getType()
+    {
+        try
+        {
+            return Integer.parseInt(params[3]);
+        }
+        catch (NumberFormatException e)
+        {
+            return 0;
+        }
+    }
+
     void setName(String name)
     {
-        this.name = name;
+        params[0] = name;
     }
 
     void setDescription(String description)
     {
-        this.description = description;
+        params[1] = description;
     }
 
     void setUniversity(String university)
     {
-        this.university = university;
+        params[2] = university;
     }
 
-    void setTheme(String theme)
+    void setType(String type)
     {
-        this.theme = theme;
+        params[3] = type;
     }
 
     void setPhotoRef(String photoRef)
     {
-        this.photoRef = photoRef;
+        params[4] = photoRef;
     }
 
     void setRef(String ref)
     {
-        this.ref = ref;
+        params[5] = ref;
     }
 
     void setDate(String date)
     {
-        this.date = date;
+        params[6] = date;
     }
 
     void setTime(String time)
     {
-        this.time = time;
+        params[7] = time;
     }
 
     void setPlace(String place)
     {
-        this.place = place;
+        params[8] = place;
     }
 
     String getInfo()
     {
-        String info = "*Название:* " + name + "\n" +
-                "*Описание:* " + description + "\n" +
-                "*Университет:* " + university + "\n" +
-                "*Тематика:* " + theme + "\n" +
-                "*Дата:* " + date + "\n";
+        String info = "*Название:* " + params[0] + "\n" +
+                "*Описание:* " + params[1] + "\n" +
+                "*Университет:* " + params[2] + "\n" +
+                "*Тематика:* " + params[3] + "\n" +
+                "*Дата:* " + params[6] + "\n";
 
-        if (time != null) info += "*Время:* " + time + "\n";
-        if (place != null) info += "*Место:* " + place + "\n";
+        if (params[7] != null)
+        {
+            info += "*Время:* " + params[7] + "\n";
+        }
+        if (params[8] != null)
+        {
+            info += "*Место:* " + params[8] + "\n";
+        }
 
         return info;
     }
@@ -157,14 +193,26 @@ class Event
     void downloadToDatabase() throws SQLException
     {
         // Проверка, введены ли все данные (время и место необязательны)
-        if (name == null || description == null || university == null ||
-                theme == null || photoRef == null || ref == null || date == null) throw new SQLException("");
+        for (int i = 0; i < 7; i++)
+        {
+            if (params[i] == null)
+            {
+                throw new SQLException("");
+            }
+        }
 
-        EventsTable.addEvent(name, description, university, theme, photoRef, ref, date, time, place);
+        EventsTable.addEvent(params);
     }
 
-    private String name, description;
-    private String university, theme;
-    private String photoRef, ref;
-    private String date, time, place;
+    public static final int PARAM_NUMBER = 9;
+    private String[] params;
+    // 0 - name
+    // 1 - description
+    // 2 - university
+    // 3 - type
+    // 4 - photoRef
+    // 5 - ref
+    // 6 - data
+    // 7 - time (необязательный)
+    // 8 - place (необязательный)
 }

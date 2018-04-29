@@ -1,86 +1,93 @@
 package bot.outputData;
 
-import org.telegram.telegraph.ExecutorOptions;
-import org.telegram.telegraph.TelegraphContext;
-import org.telegram.telegraph.TelegraphContextInitializer;
-import org.telegram.telegraph.TelegraphLogger;
-import org.telegram.telegraph.api.methods.*;
-import org.telegram.telegraph.api.objects.*;
-import org.telegram.telegraph.exceptions.TelegraphException;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.logging.ConsoleHandler;
-import java.util.logging.Level;
+import bot.Bot;
+import bot.database.EnumTable;
+import bot.database.UsersTable;
 
-public class EventCollector
+
+import java.time.LocalTime;
+import java.util.Vector;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
+public class EventCollector implements Runnable
 {
-    public EventCollector()
+    public EventCollector(/*Bot bot*/)
     {
-        // Set up logger
-        TelegraphLogger.setLevel(Level.ALL);
-        TelegraphLogger.registerLogger(new ConsoleHandler());
+        threadPool = Executors.newFixedThreadPool(2);
 
-        // Initialize context
-        TelegraphContextInitializer.init();
-        TelegraphContext.registerInstance(ExecutorOptions.class, new ExecutorOptions());
+        Thread thread = new Thread(this, "EventCollector thread");
+        thread.start();
+    }
 
-        try
+    @Override
+    public void run()
+    {
+        while (true)
         {
-            // Create account
-            Account account = new CreateAccount("hse.life")
-                    .setAuthorName("artem")
-                    .execute();
+            try
+            {
+                Vector<Callable<Void>> tasks = new Vector<>();
+                tasks.setSize(5);
+                for (int i = 0; i < 5; i++)
+                {
+                    tasks.set(i, () ->
+                    {
+                        System.out.println(Thread.currentThread());
+                        for (int j = 0; j < 10000; j++)
+                        {
+                            double a = Math.cos(j);
+                        }
 
-//            // Edit account
-//            Account editedAccount = new EditAccountInfo(account.getAccessToken())
-//                    .setAuthorName("Default user")
-//                    .setShortName("Short name")
-//                    .execute();
+                        return null;
+                    });
+                }
 
-//            // Get account info
-//            editedAccount = new GetAccountInfo(account.getAccessToken())
-//                    .execute();
+                threadPool.invokeAll(tasks);
 
-            Node contentNode = new NodeText("My content");
-            List<Node> content = new ArrayList<>();
-            content.add(contentNode);
+                int timeIndex = EnumTable.getNextTimeIndex();
+                System.out.println(Thread.currentThread());
 
-            // Create new account
-            Page page = new CreatePage(account.getAccessToken(), "My title", content)
-                    .setAuthorName("Random author")
-                    .setReturnContent(true)
-                    .execute();
+                UserGroups ug = new UserGroups(UsersTable.getUsersEventsType(1, 2));
+                ActualUniversityEvents ae = new ActualUniversityEvents(1);
 
-            // Get page
-            page = new GetPage(page.getPath()).setReturnContent(true).execute();
+                // Ожидание следующего времени для отправки подборки
+                Thread.sleep(countTimeForNextMessage(timeIndex));
 
-            Node tagNode = new NodeElement("p", new HashMap<>(), content);
-            List<Node> tagContent = new ArrayList<>();
-            tagContent.add(tagNode);
 
-            // Edit page
-            Page editedPage = new EditPage(account.getAccessToken(), page.getPath(), page.getTitle(), tagContent)
-                    .setAuthorName("New Author")
-                    .execute();
-
-            // Get page list
-            PageList pageList = new GetPageList(account.getAccessToken())
-                    .setLimit(10)
-                    .execute();
-
-            // Get page view
-            PageViews views = new GetViews(page.getPath())
-                    .setYear(2016)
-                    .execute();
-
-            // Revoke account token
-            Account revokedAccount = new RevokeAccessToken(account.getAccessToken()).execute();
-        }
-        catch (TelegraphException e)
-        {
-            TelegraphLogger.severe("MAIN", e);
+            }
+            catch (InterruptedException e)
+            {
+                int a = 8;
+            }
         }
     }
+
+    private int countTimeForNextMessage(int timeIndex)
+    {
+        LocalTime messageTime = EnumTable.getTime(timeIndex);
+        LocalTime currentTime = LocalTime.now();
+
+        int result;
+        if (currentTime.compareTo(messageTime) > 0)
+        {
+            // Подборка только в следующем дне
+            int a = messageTime.toSecondOfDay();
+            int b = 3600 * 24 - currentTime.toSecondOfDay();
+
+            result = a + b;
+        }
+        else
+        {
+            result = messageTime.toSecondOfDay() - currentTime.toSecondOfDay();
+        }
+
+        return result * 1000;
+    }
+
+
+    private ExecutorService threadPool;
+    private Bot bot;
 }

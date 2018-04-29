@@ -15,9 +15,9 @@ public class Initializer
     {
         try
         {
-            EventCollector ev = new EventCollector();
-
             DBWorker.initialize();
+
+            new EventCollector();
 
             // Инициализация Api контекста
             ApiContextInitializer.init();

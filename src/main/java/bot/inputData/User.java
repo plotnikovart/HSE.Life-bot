@@ -6,7 +6,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 
-public class Users
+class Users
 {
     static void setUniversity(String university, int userId)
     {
@@ -63,7 +63,7 @@ public class Users
 }
 
 
-class User
+public class User
 {
     User(int id)
     {

@@ -3,8 +3,6 @@ package bot.inputData;
 import bot.Bot;
 import org.telegram.telegrambots.api.methods.send.SendMessage;
 
-import java.util.concurrent.Callable;
-import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -18,13 +16,14 @@ public class TaskSpreader
     {
         menu = new Menu();
         this.bot = bot;
-        threadPool = Executors.newFixedThreadPool(10);
+        threadPool = Executors.newFixedThreadPool(5);
     }
 
     public void setTask(String messageText, long chatId)
     {
         threadPool.submit(() ->
         {
+            System.out.println(Thread.currentThread());
             SendMessage message = menu.call(messageText, chatId);
             message.setChatId(chatId);
             try

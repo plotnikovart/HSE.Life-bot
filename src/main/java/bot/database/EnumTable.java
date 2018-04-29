@@ -1,7 +1,9 @@
 package bot.database;
 
 import java.sql.*;
+import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.LinkedList;
 
 /**
  * Класс для взаимодействия с таблицами - university_list, event_type_list, time_list
@@ -11,12 +13,25 @@ public class EnumTable
     static void initialize(Connection connection) throws SQLException
     {
         // Инициализация шаблонов запросов
-        getUniversities = connection.prepareStatement("SELECT name FROM university_list ORDER BY name");
-        getEventType = connection.prepareStatement("SELECT name FROM event_type_list ORDER BY name");
-        getTime = connection.prepareStatement("SELECT time FROM time_list ORDER BY time");
+        getUniversitiesList = connection.prepareStatement("SELECT name FROM university_list ORDER BY name");
+        getEventTypeList = connection.prepareStatement("SELECT name FROM event_type_list ORDER BY name");
+        getTimeList = connection.prepareStatement("SELECT time FROM time_list ORDER BY time");
 
         check = connection.prepareStatement("SELECT status FROM change_list WHERE table_name = ? AND status = TRUE");
         update = connection.prepareStatement("UPDATE change_list SET status = FALSE WHERE table_name = ?");
+
+        getNextTimeIndex = connection.prepareStatement("(SELECT *" +
+                " FROM time_list" +
+                " WHERE time > NOW()" +
+                " ORDER BY time)" +
+                "UNION" +
+                "(SELECT *" +
+                " FROM time_list" +
+                " ORDER BY time)");
+
+        getTimeOnIndex = connection.prepareStatement("SELECT time FROM time_list WHERE id = ?");
+
+        getUniversityIndexes = connection.prepareStatement("SELECT id FROM university_list");
 
         // Загрузка данных
         loadUniversity();
@@ -38,6 +53,26 @@ public class EnumTable
         }
 
         return universityList;
+    }
+
+    public static LinkedList<Integer> getUniversityIndexes()
+    {
+        try
+        {
+            ResultSet resultSet = getUniversityIndexes.executeQuery();
+            LinkedList<Integer> list = new LinkedList<>();
+
+            while (resultSet.next())
+            {
+                list.add(resultSet.getInt(1));
+            }
+
+            return list;
+        }
+        catch (SQLException e)
+        {
+            return null;
+        }
     }
 
     public static ArrayList<String> getEventTypeList()
@@ -72,12 +107,47 @@ public class EnumTable
         return timeList;
     }
 
+    public static LocalTime getTime(Integer timeIndex)
+    {
+        LocalTime nextTime = null;
+        try
+        {
+            getTimeOnIndex.setInt(1, timeIndex);
+            ResultSet resultSet = getTimeOnIndex.executeQuery();
+
+            resultSet.next();
+            Time time = resultSet.getTime(1);
+            nextTime = LocalTime.of(time.getHours(), time.getMinutes());
+        }
+        catch (SQLException e)
+        {
+        }
+
+        return nextTime;
+    }
+
+    public static int getNextTimeIndex()
+    {
+        int index = 0;
+        try
+        {
+            ResultSet resultSet = getNextTimeIndex.executeQuery();
+
+            resultSet.next();
+            index = resultSet.getInt(1);
+        }
+        catch (SQLException e)
+        {
+        }
+
+        return index;
+    }
 
     private static void loadUniversity() throws SQLException
     {
         universityList = new ArrayList<>();
 
-        ResultSet resultSet = getUniversities.executeQuery();
+        ResultSet resultSet = getUniversitiesList.executeQuery();
 
         while (resultSet.next())
         {
@@ -93,7 +163,7 @@ public class EnumTable
     {
         eventsTypeList = new ArrayList<>();
 
-        ResultSet resultSet = getEventType.executeQuery();
+        ResultSet resultSet = getEventTypeList.executeQuery();
 
         while (resultSet.next())
         {
@@ -109,7 +179,7 @@ public class EnumTable
     {
         timeList = new ArrayList<>();
 
-        ResultSet resultSet = getTime.executeQuery();
+        ResultSet resultSet = getTimeList.executeQuery();
 
         while (resultSet.next())
         {
@@ -147,9 +217,14 @@ public class EnumTable
     private static ArrayList<String> eventsTypeList;
     private static ArrayList<String> timeList;
 
-    private static PreparedStatement getUniversities;
-    private static PreparedStatement getEventType;
-    private static PreparedStatement getTime;
+    private static PreparedStatement getUniversitiesList;
+    private static PreparedStatement getEventTypeList;
+    private static PreparedStatement getTimeList;
+
+    private static PreparedStatement getUniversityIndexes;
+
+    private static PreparedStatement getNextTimeIndex;
+    private static PreparedStatement getTimeOnIndex;
 
     private static PreparedStatement check;
     private static PreparedStatement update;

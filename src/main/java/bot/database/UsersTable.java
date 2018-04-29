@@ -32,6 +32,10 @@ public class UsersTable
         insertEventsPS = connection.prepareStatement("INSERT INTO users_events (user_id, event) VALUES (?, " +
                 "(SELECT id FROM event_type_list WHERE name = ?))");
 
+        getUsersEventsType = connection.prepareStatement("SELECT ue.user_id, ue.event " +
+                "FROM users_events ue LEFT JOIN users u ON ue.user_id = u.user_id " +
+                "WHERE u.university = ? && u.time = ? " +
+                "ORDER BY ue.user_id");
     }
 
     /**
@@ -83,7 +87,6 @@ public class UsersTable
     /**
      * Добавление пользователя со стандартными настройками.
      * Если такой пользователь есть, то не будет добавляться
-     * @param id
      */
     public static void addDefaultUser(long id)
     {
@@ -101,6 +104,21 @@ public class UsersTable
         }
         catch (SQLException e)
         {
+        }
+    }
+
+    public static ResultSet getUsersEventsType(int university, int time)
+    {
+        try
+        {
+            getUsersEventsType.setInt(1, university);
+            getUsersEventsType.setInt(2, time);
+
+            return getUsersEventsType.executeQuery();
+        }
+        catch (SQLException e)
+        {
+            return null;
         }
     }
 
@@ -130,4 +148,6 @@ public class UsersTable
     private static PreparedStatement insertPS;          // вставка id, университета, времени
     private static PreparedStatement deleteEventsPS;    // удаление мероприятий пользователя
     private static PreparedStatement insertEventsPS;    // вставка мероприятий
+
+    private static PreparedStatement getUsersEventsType;
 }
