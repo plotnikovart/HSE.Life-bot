@@ -108,9 +108,14 @@ public class Event
         }
     }
 
-    String[] getEventDescription()
+    public String[] getEventDescription()
     {
         return params;
+    }
+
+    public String getName()
+    {
+        return params[0];
     }
 
     public int getType()

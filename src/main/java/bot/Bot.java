@@ -37,6 +37,7 @@ public class Bot extends TelegramLongPollingBot
                 chatId = update.getCallbackQuery().getFrom().getId();
             }
 
+            System.out.println(chatId);
             taskSpreader.setTask(messageText, chatId);
         }
     }

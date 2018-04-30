@@ -2,12 +2,14 @@ package bot;
 
 import bot.database.DBWorker;
 import bot.outputData.EventCollector;
+import bot.outputData.MessageConstructor;
 import org.telegram.telegrambots.ApiContextInitializer;
 import org.telegram.telegrambots.TelegramBotsApi;
 import org.telegram.telegrambots.exceptions.TelegramApiException;
+import org.telegram.telegraph.exceptions.TelegraphException;
 
 import java.sql.SQLException;
-import java.util.ArrayList;
+
 
 public class Initializer
 {
@@ -17,17 +19,17 @@ public class Initializer
         {
             DBWorker.initialize();
 
-            new EventCollector();
+            //MessageConstructor.initialize();
 
             // Инициализация Api контекста
             ApiContextInitializer.init();
 
-            // Инициализация Telegram Bots API
-            TelegramBotsApi botsApi = new TelegramBotsApi();
-
             // Регистрация бота
             Bot myBot = new Bot();
-            botsApi.registerBot(myBot);
+            new TelegramBotsApi().registerBot(myBot);
+
+            MessageConstructor.initialize(myBot);
+            EventCollector eventCollector = new EventCollector();
         }
         catch (SQLException e)
         {
@@ -36,6 +38,10 @@ public class Initializer
         catch (TelegramApiException e)
         {
             System.out.println("Ошибка регистрации бота");
+        }
+        catch (TelegraphException e)
+        {
+            System.out.println("Ошибка регистрации в Telegraph");
         }
     }
 }

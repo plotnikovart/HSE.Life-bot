@@ -25,7 +25,7 @@ public class EventsTable
 
         getEventsPS = connection.prepareStatement("SELECT  name, description, university, type, photo, refference, DATE(datetime) date, TIME(datetime) time, place " +
                 "FROM events " +
-                "WHERE university = ? && (datetime >= NOW()) " +
+                "WHERE checked = TRUE && university = ? && (datetime >= NOW()) " +
                 "ORDER BY datetime");
     }
 

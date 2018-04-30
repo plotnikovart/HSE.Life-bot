@@ -6,12 +6,13 @@ import org.glassfish.grizzly.utils.EchoFilter;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Iterator;
 import java.util.LinkedList;
 
 /**
  * Класс, содержащий список с актуальными мероприятиями для конкретного университета
  */
-class ActualUniversityEvents
+class ActualUniversityEvents implements Iterable<Event>
 {
     ActualUniversityEvents(int universityIndex)
     {
@@ -36,5 +37,16 @@ class ActualUniversityEvents
 
     }
 
+    LinkedList<Event> getEvents()
+    {
+        return events;
+    }
+
     private LinkedList<Event> events;
+
+    @Override
+    public Iterator<Event> iterator()
+    {
+        return events.iterator();
+    }
 }

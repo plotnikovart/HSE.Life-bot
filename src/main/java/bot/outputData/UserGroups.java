@@ -1,18 +1,22 @@
 package bot.outputData;
 
+import bot.database.UsersTable;
+
 import java.math.BigInteger;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.LinkedList;
-import java.util.TreeMap;
+import java.util.*;
+
 
 /**
  * Класс для разбиения пользователей на группы
  */
-class UserGroups
+class UserGroups implements Iterable<UserGroup>
 {
-    UserGroups(ResultSet usersWithEvents)
+    UserGroups(int universityIndex, int timeIndex)
     {
+        ResultSet usersWithEvents = UsersTable.getUsersEventsType(universityIndex, timeIndex);
+
         groups = new TreeMap<>();
         try
         {
@@ -36,7 +40,12 @@ class UserGroups
                     currentGroupId = BigInteger.ZERO;
                 }
 
-                currentGroupId = currentGroupId.or(BigInteger.ZERO.flipBit(usersWithEvents.getShort(2) - 1));
+                short currentEventIndex = usersWithEvents.getShort(2);
+
+                if (currentEventIndex != 0)
+                {
+                    currentGroupId = currentGroupId.or(BigInteger.ZERO.flipBit(currentEventIndex - 1));
+                }
             }
             while (usersWithEvents.next());
 
@@ -50,80 +59,61 @@ class UserGroups
 
     private void addUserToGroup(long currentUser, BigInteger currentGroupId)
     {
-        LinkedList<Long> group = groups.get(currentGroupId);
-        if (group == null)
+        UserGroup userGroup = groups.get(currentGroupId);
+        if (userGroup == null)
         {
             // Добавляем новую группу пользователей
-            LinkedList<Long> newGroup = new LinkedList<>();
-            newGroup.add(currentUser);
+            UserGroup newUserGroup = new UserGroup(currentGroupId);
+            newUserGroup.addUserToGroup(currentUser);
 
-            groups.put(currentGroupId, newGroup);
+            groups.put(currentGroupId, newUserGroup);
         }
         else
         {
-            group.add(currentUser);
+            // Добавляем в уже существующую группу
+            userGroup.addUserToGroup(currentUser);
         }
-
-        // todo getLowestSetBit(), flipBit(int n)
     }
 
-    TreeMap<BigInteger, LinkedList<Long>> getGroups()
+    private TreeMap<BigInteger, UserGroup> groups;
+
+    @Override
+    public Iterator<UserGroup> iterator()
     {
-        return groups;
+        return groups.values().iterator();
     }
-
-    private TreeMap<BigInteger, LinkedList<Long>> groups;
 }
 
-// todo Проверить, для хранения использовать List<Group>
-//class Group
-//{
-//    ArrayList<Short> eventsSet;
-//
-//    void addEvent(Short event)
-//    {
-//        LinkedList<Short> ar = new ArrayList<>();
-//        ar.get
-//        eventsSet.add(event);
-//    }
-//
-//    @Override
-//    public boolean equals(Object other)
-//    {
-//        if (!(other instanceof Group))
-//        {
-//            return false;
-//        }
-//
-//        Group group = (Group)other;
-//
-//        if (group.eventsSet.size() != eventsSet.size())
-//        {
-//            return false;
-//        }
-//
-//        for (int i = 0; i < eventsSet.size(); i++)
-//        {
-//            if (!eventsSet.get(i).equals(group.eventsSet.get(i)))
-//            {
-//                return false;
-//            }
-//        }
-//
-//        return true;
-//    }
-//
-//    @Override
-//    public int hashCode()
-//    {
-//        return 0;
-//    }
-//
-//    //    @Override
-//    //    public int compareTo(Object other)
-//    //    {
-//    //        Group group = (Group)other;
-//    //
-//    //        for(int i = 0; i< arr)
-//    //    }
-//}
+class UserGroup
+{
+    private BigInteger groupId;
+    private LinkedList<Long> users;
+
+    UserGroup(BigInteger groupId)
+    {
+        this.groupId = groupId;
+        users = new LinkedList<>();
+    }
+
+    void addUserToGroup(long user)
+    {
+        users.add(user);
+    }
+
+    boolean isContained(int eventIndex)
+    {
+        // Если данный бит содержится, то число уменьшится
+        return groupId.compareTo(groupId.flipBit(eventIndex - 1)) > 0;
+    }
+
+    boolean isZeroGroup()
+    {
+        return groupId.equals(BigInteger.ZERO);
+    }
+
+
+    LinkedList<Long> getUsersList()
+    {
+        return users;
+    }
+}

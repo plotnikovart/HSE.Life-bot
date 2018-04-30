@@ -32,10 +32,14 @@ public class UsersTable
         insertEventsPS = connection.prepareStatement("INSERT INTO users_events (user_id, event) VALUES (?, " +
                 "(SELECT id FROM event_type_list WHERE name = ?))");
 
-        getUsersEventsType = connection.prepareStatement("SELECT ue.user_id, ue.event " +
-                "FROM users_events ue LEFT JOIN users u ON ue.user_id = u.user_id " +
-                "WHERE u.university = ? && u.time = ? " +
-                "ORDER BY ue.user_id");
+        getUsersEventsType = connection.prepareStatement("(SELECT u.user_id, 0 events" +
+                " FROM users u LEFT JOIN users_events ue on u.user_id = ue.user_id" +
+                " WHERE ue.event is NULL && u.university = ? && u.time = ?)" +
+                "UNION ALL" +
+                "(SELECT u.user_id, ue.event" +
+                " FROM users_events ue LEFT JOIN users u ON ue.user_id = u.user_id" +
+                " WHERE u.university = ? && u.time = ?" +
+                " ORDER BY ue.user_id)");
     }
 
     /**
@@ -113,6 +117,8 @@ public class UsersTable
         {
             getUsersEventsType.setInt(1, university);
             getUsersEventsType.setInt(2, time);
+            getUsersEventsType.setInt(3, university);
+            getUsersEventsType.setInt(4, time);
 
             return getUsersEventsType.executeQuery();
         }
