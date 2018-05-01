@@ -2,7 +2,6 @@ package bot.outputData;
 
 import bot.database.EventsTable;
 import bot.inputData.Event;
-import org.glassfish.grizzly.utils.EchoFilter;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -10,10 +9,14 @@ import java.util.Iterator;
 import java.util.LinkedList;
 
 /**
- * Класс, содержащий список с актуальными мероприятиями для конкретного университета
+ * Класс, содержащий список актуальных мероприятий для конкретного университета
  */
 class ActualUniversityEvents implements Iterable<Event>
 {
+    /**
+     * Инициализаця списка с меоприятиями
+     * @param universityIndex Индекс университета
+     */
     ActualUniversityEvents(int universityIndex)
     {
         events = new LinkedList<>();
@@ -37,11 +40,25 @@ class ActualUniversityEvents implements Iterable<Event>
 
     }
 
+    /**
+     * Геттер
+     * @return Возвращает список с актуальными мероприятиями
+     */
     LinkedList<Event> getEvents()
     {
         return events;
     }
 
+    /**
+     * Проверка, если ли мероприятия
+     * @return Есть или нет
+     */
+    boolean isEmpty()
+    {
+        return events.isEmpty();
+    }
+
+    // Список с актуальными мероприятиями
     private LinkedList<Event> events;
 
     @Override

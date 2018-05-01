@@ -6,12 +6,15 @@ import org.telegram.telegrambots.api.objects.Update;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 
 
+/**
+ * Класс, представляющий собой бота
+ */
 public class Bot extends TelegramLongPollingBot
 {
     Bot()
     {
         super();
-        taskSpreader = new TaskSpreader(this);
+        taskSpreader = new TaskSpreader(this);  // инициализация распределителя задач
     }
 
     @Override
@@ -20,8 +23,6 @@ public class Bot extends TelegramLongPollingBot
         // Проверка, отправлено ли сообщение, содержит ли оно текст или нажатие на кнопку
         if (update.hasMessage() && update.getMessage().hasText() || update.hasCallbackQuery())
         {
-            System.out.println(Thread.currentThread());
-
             String messageText;
             long chatId;
 
@@ -37,7 +38,6 @@ public class Bot extends TelegramLongPollingBot
                 chatId = update.getCallbackQuery().getFrom().getId();
             }
 
-            System.out.println(chatId);
             taskSpreader.setTask(messageText, chatId);
         }
     }

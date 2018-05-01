@@ -17,9 +17,8 @@ public class Initializer
     {
         try
         {
+            // Подключение к базе данных
             DBWorker.initialize();
-
-            //MessageConstructor.initialize();
 
             // Инициализация Api контекста
             ApiContextInitializer.init();
@@ -28,8 +27,11 @@ public class Initializer
             Bot myBot = new Bot();
             new TelegramBotsApi().registerBot(myBot);
 
+            // Инициализация конструктора сообщений
             MessageConstructor.initialize(myBot);
-            EventCollector eventCollector = new EventCollector();
+
+            // Запуск сборщика мероприятий
+            new EventCollector();
         }
         catch (SQLException e)
         {

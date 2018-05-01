@@ -4,15 +4,16 @@ package bot.database;
 import bot.inputData.Event;
 
 import java.sql.*;
-import java.time.LocalDate;
-import java.time.LocalTime;
 
-
+/**
+ * Класс для работы с таблицей events
+ */
 public class EventsTable
 {
     /**
      * Иницализация коннектора к базе и шаблонов запросов
      * @param connection Коннектор
+     * @throws SQLException Произошла ошибка при формировании запросов
      */
     static void initialize(Connection connection) throws SQLException
     {
@@ -29,7 +30,11 @@ public class EventsTable
                 "ORDER BY datetime");
     }
 
-    // todo передавать event
+    /**
+     * Регистрация нового мероприятия
+     * @param parameters Параметры мероприятия
+     * @throws SQLException Были переданы некорректные параметры
+     */
     public static void addEvent(String... parameters) throws SQLException
     {
         if (insertPS == null)
@@ -56,7 +61,12 @@ public class EventsTable
         insertPS.execute();
     }
 
-    public static ResultSet getEvents(int university)
+    /**
+     * Получение списка актуальных мероприятий для университета
+     * @param university Идентификатор университета
+     * @return Список мероприятий, null если ошибка
+     */
+    synchronized public static ResultSet getEvents(int university)
     {
         try
         {
@@ -71,6 +81,7 @@ public class EventsTable
 
     }
 
+    // Шаблоны запросов
     private static PreparedStatement insertPS;      // добавление нового мероприятия
     private static PreparedStatement getEventsPS;   // получение мероприятий из одного университета
 }

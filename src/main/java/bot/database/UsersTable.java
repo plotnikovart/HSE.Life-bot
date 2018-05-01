@@ -11,6 +11,7 @@ public class UsersTable
     /**
      * Иницализация коннектора к базе и шаблонов запросов
      * @param connection Коннектор
+     * @throws SQLException Произошла ошибка при формировании запросов
      */
     static void initialize(Connection connection) throws SQLException
     {
@@ -32,7 +33,7 @@ public class UsersTable
         insertEventsPS = connection.prepareStatement("INSERT INTO users_events (user_id, event) VALUES (?, " +
                 "(SELECT id FROM event_type_list WHERE name = ?))");
 
-        getUsersEventsType = connection.prepareStatement("(SELECT u.user_id, 0 events" +
+        getUsersEventsTypePS = connection.prepareStatement("(SELECT u.user_id, 0 events" +
                 " FROM users u LEFT JOIN users_events ue on u.user_id = ue.user_id" +
                 " WHERE ue.event is NULL && u.university = ? && u.time = ?)" +
                 "UNION ALL" +
@@ -48,12 +49,16 @@ public class UsersTable
      * @param university Название университета
      * @param time       Время
      * @param events     Список мероприятий
+     * @throws SQLException Были переданы некорректные параметры
      */
     public static void addUser(long id, String university, String time, List<String> events) throws SQLException
     {
         if (checkPS == null)
+        {
             throw new SQLException("Коннектор не определен");
+        }
 
+        // Если пользователь уже есть в БД
         if (isContained(id))
         {
             // Обновляем данные пользователя
@@ -90,12 +95,14 @@ public class UsersTable
 
     /**
      * Добавление пользователя со стандартными настройками.
-     * Если такой пользователь есть, то не будет добавляться
+     * Если такой пользователь есть, то не будем его добавлять
+     * @param id Идентификатор пользователя
      */
     public static void addDefaultUser(long id)
     {
         try
         {
+            // Если такого пользователя нет, то вставляем его
             if (!isContained(id))
             {
                 // Вставляем нового пользователя
@@ -106,21 +113,27 @@ public class UsersTable
                 insertPS.execute();
             }
         }
-        catch (SQLException e)
+        catch (SQLException e)  // Если ошибка, то ничего не делаем
         {
         }
     }
 
-    public static ResultSet getUsersEventsType(int university, int time)
+    /**
+     * Получение списка пользователей с их мероприятиями
+     * @param university Идентификатор университета
+     * @param time       Идентификатор времени для получения
+     * @return Пользователи и их мероприятия
+     */
+    synchronized public static ResultSet getUsersEventsType(int university, int time)
     {
         try
         {
-            getUsersEventsType.setInt(1, university);
-            getUsersEventsType.setInt(2, time);
-            getUsersEventsType.setInt(3, university);
-            getUsersEventsType.setInt(4, time);
+            getUsersEventsTypePS.setInt(1, university);
+            getUsersEventsTypePS.setInt(2, time);
+            getUsersEventsTypePS.setInt(3, university);
+            getUsersEventsTypePS.setInt(4, time);
 
-            return getUsersEventsType.executeQuery();
+            return getUsersEventsTypePS.executeQuery();
         }
         catch (SQLException e)
         {
@@ -132,6 +145,7 @@ public class UsersTable
      * Проверка, содержится ли пользователь в базе
      * @param id Уникальный идентификатор пользователя в Telegram
      * @return Сдержится или нет
+     * @throws SQLException Ошибка обращения к БД
      */
     private static boolean isContained(long id) throws SQLException
     {
@@ -141,19 +155,21 @@ public class UsersTable
 
         ResultSet resultSet = checkPS.executeQuery();
 
-        while (resultSet.next())
+        if (resultSet.next())
+        {
             contains = true;
+        }
 
         return contains;
     }
 
 
     // Шаблоны запросов
-    private static PreparedStatement checkPS;           // проверка, содержится ли пользователь в базе
-    private static PreparedStatement updatePS;          // обновление университета и времени
-    private static PreparedStatement insertPS;          // вставка id, университета, времени
-    private static PreparedStatement deleteEventsPS;    // удаление мероприятий пользователя
-    private static PreparedStatement insertEventsPS;    // вставка мероприятий
+    private static PreparedStatement checkPS;               // проверка, содержится ли пользователь в базе
+    private static PreparedStatement updatePS;              // обновление университета и времени
+    private static PreparedStatement insertPS;              // вставка id, университета, времени
+    private static PreparedStatement deleteEventsPS;        // удаление мероприятий пользователя
+    private static PreparedStatement insertEventsPS;        // вставка мероприятий пользователя
 
-    private static PreparedStatement getUsersEventsType;
+    private static PreparedStatement getUsersEventsTypePS;  // получение пользователей с их мероприятиями
 }

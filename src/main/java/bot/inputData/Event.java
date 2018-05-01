@@ -7,99 +7,96 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Класс-контейнер. Хранит в себе мероприятия, которые еще не были загружены в базу данных.
- * После загрузки в базу мероприятие удаляется отсюда.
+ * После загрузки в базу мероприятие удаляется из контейнера.
  */
 class Events
 {
     /**
-     * Метод определения мероприятия
-     * @param type  Определяемый параметр
-     * @param param Значение определяемого параметра
-     * @param id    ID пользователя, предлагающего мероприятие
+     * Установка параметра для мероприятия
+     * @param paramNumber Определяемый параметр
+     * @param value       Значение определяемого параметра
+     * @param userId      ID пользователя, предлагающего мероприятие
      */
-    static void setEvent(String type, String param, int id)
+    static void setEventParam(int paramNumber, String value, long userId)
     {
-        Event event = findEvent(id);
+        Event event = findEvent(userId);
 
         // Выбор уставливаемого параметра
-        switch (type)
-        {
-            case (Functions.B010):      // название
-                event.setName(param);
-                break;
-            case (Functions.B011):      // опописание
-                event.setDescription(param);
-                break;
-            case (Functions.B012):      // университет
-                event.setUniversity(param);
-                break;
-            case (Functions.B013):      // тематика
-                event.setType(param);
-                break;
-            case (Functions.B014):      // ссылка на фотографию
-                event.setPhotoRef(param);
-                break;
-            case (Functions.B015):      // ссылка на пост
-                event.setRef(param);
-                break;
-            case (Functions.B016):      // дата
-                event.setDate(param);
-                break;
-            case (Functions.B017):      // время
-                event.setTime(param);
-                break;
-            case (Functions.B018):      // место
-                event.setPlace(param);
-                break;
-        }
+        event.setParam(paramNumber, value);
     }
 
-    static void downloadEventToDatabase(int id) throws SQLException
+    /**
+     * Загрузка мероприятия в БД
+     * @param userId Идентификатор пользователя, предложившего мероприятие
+     * @throws SQLException Были указаны не все параметры мероприятия, или неверные
+     */
+    static void downloadEventToDatabase(long userId) throws SQLException
     {
-        Event event = events.get(id);
-        if (event == null) throw new SQLException("");
-
+        Event event = findEvent(userId);
         event.downloadToDatabase();
-        events.remove(id);
+        events.remove(userId);
     }
 
-    static void deleteEvent(int id)
+    /**
+     * Удаление мероприятия из временного контейнера
+     * @param userId Идентификатор пользователя, предложившего мероприятие
+     */
+    static void deleteEvent(long userId)
     {
-        events.remove(id);
+        events.remove(userId);
     }
 
-    static String getEventInfo(int id)
+    /**
+     * Получение информации о мероприятии
+     * @param userId Идентификатор пользователя, предложившего мероприятие
+     * @return Информация
+     */
+    static String getEventInfo(long userId)
     {
-        Event event = findEvent(id);
+        Event event = findEvent(userId);
 
         return event.getInfo();
     }
 
-    private static Event findEvent(int id)
+    /**
+     * Поиск мероприятия. Если его нет, то создается новое пустое мероприятие
+     * @param userId Идентификатор пользователя, предложившего мероприятие
+     * @return Ссылка на мероприятие
+     */
+    private static Event findEvent(long userId)
     {
-        Event event = events.get(id);
+        Event event = events.get(userId);
 
         if (event == null)
         {
             event = new Event();
-            events.put(id, event);
+            events.put(userId, event);
         }
 
         return event;
     }
 
-    private static ConcurrentHashMap<Integer, Event> events = new ConcurrentHashMap<>();
+    // Временное хранилище мероприятий
+    private static ConcurrentHashMap<Long, Event> events = new ConcurrentHashMap<>();
 }
 
-
-// todo подумать насчет downloadToDatabase
+/**
+ * Класс, представляет собой мероприятие
+ */
 public class Event
 {
+    /**
+     * Инициализация мероприятия с null полями
+     */
     Event()
     {
         params = new String[PARAM_NUMBER];
     }
 
+    /**
+     * Инициализирует такими же значениями
+     * @param params Значения полей мероприятия
+     */
     public Event(String[] params)
     {
         if (params.length == PARAM_NUMBER)
@@ -108,16 +105,28 @@ public class Event
         }
     }
 
-    public String[] getEventDescription()
+    /**
+     * Геттер
+     * @return Передает поля мероприятия
+     */
+    public String[] getEventParams()
     {
         return params;
     }
 
+    /**
+     * Геттер
+     * @return Название мероприятия
+     */
     public String getName()
     {
         return params[0];
     }
 
+    /**
+     * Геттер
+     * @return Тип мероприятия
+     */
     public int getType()
     {
         try
@@ -130,66 +139,29 @@ public class Event
         }
     }
 
-    void setName(String name)
+    /**
+     * Устанавливает значение параметра мероприятия
+     * @param paramNumber Номер параметра
+     * @param value Значение параметра
+     */
+    void setParam(int paramNumber, String value)
     {
-        params[0] = name;
+        params[paramNumber] = value;
     }
 
-    void setDescription(String description)
-    {
-        params[1] = description;
-    }
-
-    void setUniversity(String university)
-    {
-        params[2] = university;
-    }
-
-    void setType(String type)
-    {
-        params[3] = type;
-    }
-
-    void setPhotoRef(String photoRef)
-    {
-        params[4] = photoRef;
-    }
-
-    void setRef(String ref)
-    {
-        params[5] = ref;
-    }
-
-    void setDate(String date)
-    {
-        params[6] = date;
-    }
-
-    void setTime(String time)
-    {
-        params[7] = time;
-    }
-
-    void setPlace(String place)
-    {
-        params[8] = place;
-    }
-
+    /**
+     * Получение информации о мероприятии
+     * @return Строка с перечислением полей
+     */
     String getInfo()
     {
-        String info = "*Название:* " + params[0] + "\n" +
-                "*Описание:* " + params[1] + "\n" +
-                "*Университет:* " + params[2] + "\n" +
-                "*Тематика:* " + params[3] + "\n" +
-                "*Дата:* " + params[6] + "\n";
-
-        if (params[7] != null)
+        String info = "";
+        for (int i = 0; i < PARAM_NUMBER; i++)
         {
-            info += "*Время:* " + params[7] + "\n";
-        }
-        if (params[8] != null)
-        {
-            info += "*Место:* " + params[8] + "\n";
+            if (params[i] != null)
+            {
+                info += '*' + paramsName[i] + ":* " + params[i] + '\n';
+            }
         }
 
         return info;
@@ -198,19 +170,38 @@ public class Event
     void downloadToDatabase() throws SQLException
     {
         // Проверка, введены ли все данные (время и место необязательны)
+        String absentParams = "Вы не добавили:\n\n";
         for (int i = 0; i < 7; i++)
         {
             if (params[i] == null)
             {
-                throw new SQLException("");
+                absentParams += '*' + paramsName[i] + '*' + "\n";
             }
         }
 
-        EventsTable.addEvent(params);
+        if (absentParams.equals("Вы не добавили:\n\n"))
+        {
+            try
+            {
+                // Добавление в БД
+                EventsTable.addEvent(params);
+            }
+            catch (SQLException e)
+            {
+                throw new SQLException("Вы ввели некорректные данные, пожалуйста проверьте:\n\n*Университетет* или *Тематика*");
+            }
+        }
+        else
+        {
+            absentParams += "\nПожулуйста, добавьте недостающие параметры";
+            throw new SQLException(absentParams);
+        }
     }
 
-    public static final int PARAM_NUMBER = 9;
-    private String[] params;
+    public static final int PARAM_NUMBER = 9;       // количество параметров
+    private String[] params;                        // значения параметров
+    static private String[] paramsName = {"Название", "Описание", "Университет", "Тематика", "Ссылка на фотографию",
+            "Ссылка на пост", "Дата", "Время", "Место"};
     // 0 - name
     // 1 - description
     // 2 - university

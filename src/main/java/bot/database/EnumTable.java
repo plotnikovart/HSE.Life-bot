@@ -6,21 +6,27 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 
 /**
- * Класс для взаимодействия с таблицами - university_list, event_type_list, time_list
+ * Класс для взаимодействия с таблицами - university_list, event_type_list, time_list.
+ * А также с change_list, everyday_images
  */
 public class EnumTable
 {
+    /**
+     * Иницализация коннектора к базе и шаблонов запросов
+     * @param connection Коннектор
+     * @throws SQLException Произошла ошибка при формировании запросов
+     */
     static void initialize(Connection connection) throws SQLException
     {
         // Инициализация шаблонов запросов
-        getUniversitiesList = connection.prepareStatement("SELECT name FROM university_list ORDER BY name");
-        getEventTypeList = connection.prepareStatement("SELECT name FROM event_type_list ORDER BY name");
-        getTimeList = connection.prepareStatement("SELECT time FROM time_list ORDER BY time");
+        getUniversityListPS = connection.prepareStatement("SELECT name FROM university_list ORDER BY name");
+        getEventTypeListPS = connection.prepareStatement("SELECT name FROM event_type_list ORDER BY name");
+        getTimeListPS = connection.prepareStatement("SELECT time FROM time_list ORDER BY time");
 
-        check = connection.prepareStatement("SELECT status FROM change_list WHERE table_name = ? AND status = TRUE");
-        update = connection.prepareStatement("UPDATE change_list SET status = FALSE WHERE table_name = ?");
+        checkPS = connection.prepareStatement("SELECT status FROM change_list WHERE table_name = ? AND status = TRUE");
+        updateStatusPS = connection.prepareStatement("UPDATE change_list SET status = FALSE WHERE table_name = ?");
 
-        getNextTimeIndex = connection.prepareStatement("(SELECT *" +
+        getNextTimeIndexPS = connection.prepareStatement("(SELECT *" +
                 " FROM time_list" +
                 " WHERE time > NOW()" +
                 " ORDER BY time)" +
@@ -29,9 +35,11 @@ public class EnumTable
                 " FROM time_list" +
                 " ORDER BY time)");
 
-        getTimeOnIndex = connection.prepareStatement("SELECT time FROM time_list WHERE id = ?");
+        getTimePS = connection.prepareStatement("SELECT time FROM time_list WHERE id = ?");
 
-        getUniversityIndexes = connection.prepareStatement("SELECT id FROM university_list");
+        getUniversityIndexesPS = connection.prepareStatement("SELECT id FROM university_list");
+
+        getEverydayImagePS = connection.prepareStatement("SELECT refference FROM everyday_images WHERE day_of_week = WEEKDAY(NOW())");
 
         // Загрузка данных
         loadUniversity();
@@ -39,14 +47,24 @@ public class EnumTable
         loadTime();
     }
 
+    /**
+     * Получение списка университетов
+     * @return Список университетов
+     */
     public static ArrayList<String> getUniversityList()
     {
         try
         {
-            if (isChanged("university_list"))
+            // Если значения списка изменялись, то обновляем список
+            synchronized (EnumTable.class)
             {
-                loadUniversity();
+                // Не пропустит второй поток для повторного изменения
+                if (isChanged("university_list"))
+                {
+                    loadUniversity();
+                }
             }
+
         }
         catch (SQLException e)
         {
@@ -55,11 +73,15 @@ public class EnumTable
         return universityList;
     }
 
+    /**
+     * Получение индексов университетов
+     * @return Индексы университетов, пустой список, если ошибка
+     */
     public static LinkedList<Integer> getUniversityIndexes()
     {
         try
         {
-            ResultSet resultSet = getUniversityIndexes.executeQuery();
+            ResultSet resultSet = getUniversityIndexesPS.executeQuery();
             LinkedList<Integer> list = new LinkedList<>();
 
             while (resultSet.next())
@@ -71,17 +93,26 @@ public class EnumTable
         }
         catch (SQLException e)
         {
-            return null;
+            return new LinkedList<>();
         }
     }
 
+    /**
+     * Получение списка с типами мероприятий
+     * @return Список с типами мероприятий
+     */
     public static ArrayList<String> getEventTypeList()
     {
         try
         {
-            if (isChanged("events"))
+            // Если значения изменялись, то обновляем их
+            synchronized (EnumTable.class)
             {
-                loadEventType();
+                // Не пропустит второй поток для повторного изменения
+                if (isChanged("events"))
+                {
+                    loadEventType();
+                }
             }
         }
         catch (SQLException e)
@@ -91,14 +122,24 @@ public class EnumTable
         return eventsTypeList;
     }
 
+    /**
+     * Получение списка со временем
+     * @return Список со временем
+     */
     public static ArrayList<String> getTimeList()
     {
         try
         {
-            if (isChanged("time"))
+            // Если значения изменялись, то обновляем их
+            synchronized (EnumTable.class)
             {
-                loadTime();
+                // Не пропустит второй поток для повторного изменения
+                if (isChanged("time"))
+                {
+                    loadTime();
+                }
             }
+
         }
         catch (SQLException e)
         {
@@ -107,47 +148,75 @@ public class EnumTable
         return timeList;
     }
 
-    public static LocalTime getTime(Integer timeIndex)
+    /**
+     * Получение времени по индексу времени
+     * @param timeIndex Индекс времени
+     * @return Время, null если индекс указан неверно
+     */
+    public static LocalTime getTime(int timeIndex)
     {
-        LocalTime nextTime = null;
         try
         {
-            getTimeOnIndex.setInt(1, timeIndex);
-            ResultSet resultSet = getTimeOnIndex.executeQuery();
+            getTimePS.setInt(1, timeIndex);
+            ResultSet resultSet = getTimePS.executeQuery();
 
             resultSet.next();
             Time time = resultSet.getTime(1);
-            nextTime = LocalTime.of(time.getHours(), time.getMinutes());
+            return LocalTime.of(time.getHours(), time.getMinutes());
         }
         catch (SQLException e)
         {
+            return null;
         }
-
-        return nextTime;
     }
 
+    /**
+     * Получение индекса следующего времени отправки
+     * @return Индекс времени, 0, если ошибка
+     */
     public static int getNextTimeIndex()
     {
-        int index = 0;
         try
         {
-            ResultSet resultSet = getNextTimeIndex.executeQuery();
+            ResultSet resultSet = getNextTimeIndexPS.executeQuery();
 
             resultSet.next();
-            index = resultSet.getInt(1);
+            return resultSet.getInt(1);
         }
         catch (SQLException e)
         {
+            return 0;
         }
-
-        return index;
     }
 
+    /**
+     * Получение ссылки на ежедневную картинку
+     * @return
+     */
+    synchronized public static String getEverydayImage()
+    {
+        try
+        {
+            ResultSet resultSet = getEverydayImagePS.executeQuery();
+
+            resultSet.next();
+            return resultSet.getString(1);
+        }
+        catch (SQLException e)
+        {
+            return "";
+        }
+    }
+
+    /**
+     * Обновление списка университетов
+     * @throws SQLException Ошибка при обновлении
+     */
     private static void loadUniversity() throws SQLException
     {
         universityList = new ArrayList<>();
 
-        ResultSet resultSet = getUniversitiesList.executeQuery();
+        ResultSet resultSet = getUniversityListPS.executeQuery();
 
         while (resultSet.next())
         {
@@ -155,15 +224,19 @@ public class EnumTable
         }
 
         // Обновление статуса
-        update.setString(1, "university_list");
-        update.executeUpdate();
+        updateStatusPS.setString(1, "university_list");
+        updateStatusPS.executeUpdate();
     }
 
+    /**
+     * Обновление списка типов мероприятий
+     * @throws SQLException Ошибка при обновлении
+     */
     private static void loadEventType() throws SQLException
     {
         eventsTypeList = new ArrayList<>();
 
-        ResultSet resultSet = getEventTypeList.executeQuery();
+        ResultSet resultSet = getEventTypeListPS.executeQuery();
 
         while (resultSet.next())
         {
@@ -171,15 +244,19 @@ public class EnumTable
         }
 
         // Обновление статуса
-        update.setString(1, "event_type_list");
-        update.executeUpdate();
+        updateStatusPS.setString(1, "event_type_list");
+        updateStatusPS.executeUpdate();
     }
 
+    /**
+     * Обновление списка времен
+     * @throws SQLException Ошибка при обновлении
+     */
     private static void loadTime() throws SQLException
     {
         timeList = new ArrayList<>();
 
-        ResultSet resultSet = getTimeList.executeQuery();
+        ResultSet resultSet = getTimeListPS.executeQuery();
 
         while (resultSet.next())
         {
@@ -188,18 +265,23 @@ public class EnumTable
         }
 
         // Обновление статуса
-        update.setString(1, "time_list");
-        update.executeUpdate();
+        updateStatusPS.setString(1, "time_list");
+        updateStatusPS.executeUpdate();
     }
 
+    /**
+     * Проверка, изменилась ли таблица
+     * @param tableName Имя таблицы
+     * @return Изменилась или нет
+     */
     public static boolean isChanged(String tableName)
     {
         boolean changed = false;
         try
         {
-            check.setString(1, tableName);
+            checkPS.setString(1, tableName);
 
-            ResultSet resultSet = check.executeQuery();
+            ResultSet resultSet = checkPS.executeQuery();
             if (resultSet.next())
             {
                 changed = true;
@@ -213,19 +295,21 @@ public class EnumTable
     }
 
 
-    private static ArrayList<String> universityList;
-    private static ArrayList<String> eventsTypeList;
-    private static ArrayList<String> timeList;
+    private static volatile ArrayList<String> universityList;       // университеты
+    private static volatile ArrayList<String> eventsTypeList;       // типы мероприятий
+    private static volatile ArrayList<String> timeList;             // времена
 
-    private static PreparedStatement getUniversitiesList;
-    private static PreparedStatement getEventTypeList;
-    private static PreparedStatement getTimeList;
+    private static PreparedStatement getUniversityListPS;           // получение университетов
+    private static PreparedStatement getEventTypeListPS;            // получение типов мероприятий
+    private static PreparedStatement getTimeListPS;                 // получение времен
 
-    private static PreparedStatement getUniversityIndexes;
+    private static PreparedStatement getUniversityIndexesPS;        // получение индексов университетов
 
-    private static PreparedStatement getNextTimeIndex;
-    private static PreparedStatement getTimeOnIndex;
+    private static PreparedStatement getNextTimeIndexPS;            // получение индекса следующего времени
+    private static PreparedStatement getTimePS;                     // получение времени по индексу
 
-    private static PreparedStatement check;
-    private static PreparedStatement update;
+    private static PreparedStatement getEverydayImagePS;            // получение картинки на каждый день
+
+    private static PreparedStatement checkPS;                       // проверка на изменение
+    private static PreparedStatement updateStatusPS;                // обновление университетов/типов мероприятий/времени
 }

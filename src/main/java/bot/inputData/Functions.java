@@ -8,20 +8,22 @@ import org.telegram.telegrambots.api.objects.replykeyboard.ReplyKeyboardMarkup;
 import org.telegram.telegrambots.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.api.objects.replykeyboard.buttons.KeyboardRow;
 
+import java.sql.Date;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Vector;
+import java.sql.Time;
+import java.util.*;
 
 /**
- * Вспомогательный класс со статическими функциями - действиями при нажатии на кнопки
+ * Вспомогательный класс со статическими функциями - действиями при переходе в пункт меню
  */
 class Functions
 {
-    // Названия/содержимое кнопок
+    // Названия пунктов
     static final String B0 = "/start";
     static final String B00 = "\uD83D\uDD27 Настроить мероприятия";
     static final String B01 = "\uD83D\uDE4B Предложить мероприятие";
+
+    static final String INPUT = "input";
 
     static final String B000 = "\uD83C\uDFDB Ваш ВУЗ";
     static final String B001 = "\uD83E\uDD47 Приорететные мероприятия";
@@ -39,6 +41,7 @@ class Functions
     static final String B016 = "\uD83D\uDCC6 Дата";
     static final String B017 = "\uD83D\uDD54 Время";
     static final String B018 = "\uD83D\uDCCD Место";
+    static final String B019 = "\uD83D\uDD0E Посмотреть введенные данные \uD83D\uDD0D";
 
     // Готовые шаблоны "тяжелых" сообщений
     private static volatile SendMessage startM;
@@ -53,22 +56,28 @@ class Functions
     private static volatile SendMessage setEventsEM;
 
 
-    static SendMessage start(String... mes)
+    /**
+     * Пункт B0
+     */
+    static SendMessage start(long userId, String... messageText)
     {
         // При нажатии на кнопку /start, данные о пользователе заносятся в базу со стандартными настройками
-        UsersTable.addDefaultUser(Integer.parseInt(mes[1]));
+        UsersTable.addDefaultUser(userId);
 
         if (startM != null)
+        {
             return startM;
+        }
 
         synchronized (Function.class)
         {
             if (startM != null)
+            {
                 return startM;
+            }
 
-            startM = new SendMessage();
-            startM.enableMarkdown(true);
-            startM.setText("Вы можете персонально настроить мероприятия, которые хотите получать.\n\nТакже вы можете предложить мероприятие для публикации");
+            startM = getMarkdownMessage();
+            startM.setText("Вы можете персонально *настроить* мероприятия, которые хотите получать.\n\nТакже вы можете *предложить* мероприятие для публикации");
 
             ReplyKeyboardMarkup keyboardMarkup = new ReplyKeyboardMarkup();
             keyboardMarkup.setOneTimeKeyboard(true);
@@ -95,20 +104,26 @@ class Functions
     // Добавление данных пользователя
     ////////////////////////////////////////////////////
 
-    static SendMessage tuneEvents(String... mes)
+    /**
+     * Пункт B00. Настройка мероприятий
+     */
+    static SendMessage tuneEvents(long userId, String... messageText)
     {
         if (tuneEventsM != null)
+        {
             return tuneEventsM;
+        }
 
         synchronized (Function.class)
         {
             if (tuneEventsM != null)
+            {
                 return tuneEventsM;
+            }
 
-            tuneEventsM = new SendMessage();
-            tuneEventsM.setParseMode("markdown");
-            tuneEventsM.enableMarkdown(true);
-            tuneEventsM.setText("Теперь настройте информацию под себя!\nУкажите предпочтительные *типы мероприятий*, *места*, которые вам будет удобно посещать, и *время* для получения подборок");
+            tuneEventsM = getMarkdownMessage();
+            tuneEventsM.setText("Теперь настройте информацию под себя!\n" +
+                    "Укажите предпочтительную *тематику* мероприятий, свой *университет*, и *время* для получения подборок");
 
             // Inline keyboard
             InlineKeyboardMarkup markupInline = new InlineKeyboardMarkup();
@@ -142,15 +157,22 @@ class Functions
         return tuneEventsM;
     }
 
-    static SendMessage setUniversity(String... mes)
+    /**
+     * Пункт B000. Настройка университета
+     */
+    static SendMessage setUniversity(long userId, String... messageText)
     {
         if (setUniversityM != null && !EnumTable.isChanged("university_list"))
+        {
             return setUniversityM;
+        }
 
         synchronized (Function.class)
         {
             if (setUniversityM != null)
+            {
                 return setUniversityM;
+            }
 
             setUniversityM = new SendMessage();
             setUniversityM.setText("Выберите ваш университет:\n");
@@ -161,26 +183,33 @@ class Functions
         return setUniversityM;
     }
 
-    static SendMessage inputUniversity(String... mes)
+    /**
+     * Ввод университета
+     */
+    static SendMessage inputUniversity(long userId, String... messageText)
     {
-        SendMessage message = new SendMessage();
-        inputReply(message, mes[0]);
-
         // Обновление данных пользователя
-        Users.setUniversity(mes[0], Integer.parseInt(mes[1]));
+        Users.setUniversity(messageText[0], userId);
 
-        return message;
+        return getInputReplyMessage(messageText[0]);
     }
 
-    static SendMessage setEvents(String... mes)
+    /**
+     * Пункт B001. Настройка мероприятий
+     */
+    static SendMessage setEvents(long userId, String... messageText)
     {
         if (setEventsM != null && !EnumTable.isChanged("event_type_list"))
+        {
             return setEventsM;
+        }
 
         synchronized (Function.class)
         {
             if (setEventsM != null)
+            {
                 return setEventsM;
+            }
 
             setEventsM = new SendMessage();
             setEventsM.setText("Выберите темы мероприятий, которые будут показываться вам в начале подборки:");
@@ -191,33 +220,40 @@ class Functions
         return setEventsM;
     }
 
-    static SendMessage inputEvents(String... mes)
+    /**
+     * Ввод мероприятий
+     */
+    static SendMessage inputEvents(long userId, String... messageText)
     {
-        SendMessage message = new SendMessage();
-        message.setParseMode("markdown");
-        message.enableMarkdown(true);
-
         // Обновление данных пользователя
-        String s = Users.setEvents(mes[0], Integer.parseInt(mes[1]));
+        String s = Users.setEvents(messageText[0], userId);
 
+        SendMessage message = getMarkdownMessage();
         message.setText("Вы выбрали: *" + s + "*" +
-                "\n\nДля *отмены* еще раз нажмите на мероприятие" +
-                "\nВы можете указать *несколько* мероприятий");
+                "\n\nВы можете указать *несколько* мероприятий" +
+                "\nДля *отмены* еще раз нажмите на мероприятие");
 
         addBackButton(message);
 
         return message;
     }
 
-    static SendMessage setTime(String... mes)
+    /**
+     * Пункт B002. Настройка времени
+     */
+    static SendMessage setTime(long userId, String... messageText)
     {
         if (setTimeM != null && !EnumTable.isChanged("time_list"))
+        {
             return setTimeM;
+        }
 
         synchronized (Function.class)
         {
             if (setTimeM != null)
+            {
                 return setTimeM;
+            }
 
             setTimeM = new SendMessage();
             setTimeM.setText("Выберите удобное время для получения подборки с мероприятиями:");
@@ -250,44 +286,48 @@ class Functions
         return setTimeM;
     }
 
-    static SendMessage inputTime(String... mes)
+    /**
+     * Ввод времени
+     */
+    static SendMessage inputTime(long userId, String... messageText)
     {
-        SendMessage message = new SendMessage();
-        message.setParseMode("markdown");
-        message.enableMarkdown(true);
-
         // Обновление данных пользователя
-        Users.setTime(mes[0], Integer.parseInt(mes[1]));
+        Users.setTime(messageText[0], userId);
 
-        message.setText("Вы выбрали: *" + mes[0] + "*" +
-                "\n\nВы можете изменить свой выбор");
+        return getInputReplyMessage(messageText[0]);
+    }
 
-        addBackButton(message);
+    /**
+     * Пункт B003. Отмена мероприятий
+     */
+    static SendMessage discardChanges(long userId, String... messageText)
+    {
+        Users.deleteUser(userId); // удаление пользователя из временного хранилища
+
+        SendMessage message = new SendMessage();
+        message.setText("Вы отменили все изменения!");
 
         return message;
     }
 
-    static SendMessage discardChanges(String... mes)
+    /**
+     * Пункт B004. Сохранение в базу
+     */
+    static SendMessage saveToDatabase(long userId, String... messageText)
     {
-        SendMessage message = new SendMessage();
-        message.setText("Вы отменили все изменения!\n\n" +
-                "Ваш профиль: "); // TODO просмотр профиля из базы данных
+        SendMessage message = getMarkdownMessage();
 
-        Users.deleteUser(Integer.parseInt(mes[1])); // удаление пользователя из временного хранилища
-
-        return message;
-    }
-
-    static SendMessage saveToDatabase(String... mes)
-    {
-        SendMessage message = new SendMessage();
-        message.setParseMode("markdown");
-        message.enableMarkdown(true);
-
-        message.setText("Ваши данные обновлены!\n\n" +
-                Users.getUserInfo(Integer.parseInt(mes[1])));
-
-        Users.downloadUserToDatabase(Integer.parseInt(mes[1]));
+        try
+        {
+            String userInfo = Users.getUserInfo(userId);
+            Users.downloadUserToDatabase(userId);
+            message.setText("Ваши данные обновлены!\n\n" + userInfo);
+        }
+        catch (SQLException e)
+        {
+            message.setText("*Вы ввели некорректные данные*\nПожалуйста выбирайте информацию по кнопкам");
+            addBackButton(message);
+        }
 
         return message;
     }
@@ -296,46 +336,56 @@ class Functions
     // Добавление мероприятия
     ////////////////////////////////////////////////////
 
-    static SendMessage offerEvent(String... mes)
+    /**
+     * Пункт B01. Добавление мероприятия
+     */
+    static SendMessage offerEvent(long userId, String... messageText)
     {
         if (offerEventM != null)
+        {
             return offerEventM;
+        }
 
         synchronized (Function.class)
         {
             if (offerEventM != null)
+            {
                 return offerEventM;
+            }
 
             offerEventM = new SendMessage();
             offerEventM.setText("Здесь вы можете предложить свое мероприятие.\nПосле проверки модераторами оно будет доступно читателям");
 
             // Inline keyboard
             InlineKeyboardMarkup markupInline = new InlineKeyboardMarkup();
-            List<List<InlineKeyboardButton>> rowsInline = new ArrayList<>();
+            List<List<InlineKeyboardButton>> rowsInline = new ArrayList<>(7);
 
             // Добавление строк
-            List<InlineKeyboardButton> row1 = new ArrayList<>();
+            List<InlineKeyboardButton> row1 = new ArrayList<>(2);
             row1.add(new InlineKeyboardButton().setText(B010).setCallbackData(B010));
 
-            List<InlineKeyboardButton> row2 = new ArrayList<>();
+            List<InlineKeyboardButton> row2 = new ArrayList<>(2);
             row2.add(new InlineKeyboardButton().setText(B011).setCallbackData(B011));
 
-            List<InlineKeyboardButton> row3 = new ArrayList<>();
+            List<InlineKeyboardButton> row3 = new ArrayList<>(2);
             row3.add(new InlineKeyboardButton().setText(B012).setCallbackData(B012));
             row3.add(new InlineKeyboardButton().setText(B013).setCallbackData(B013));
 
-            List<InlineKeyboardButton> row4 = new ArrayList<>();
+            List<InlineKeyboardButton> row4 = new ArrayList<>(2);
             row4.add(new InlineKeyboardButton().setText(B014).setCallbackData(B014));
             row4.add(new InlineKeyboardButton().setText(B015).setCallbackData(B015));
 
-            List<InlineKeyboardButton> row5 = new ArrayList<>();
+            List<InlineKeyboardButton> row5 = new ArrayList<>(3);
             row5.add(new InlineKeyboardButton().setText(B016).setCallbackData(B016));
             row5.add(new InlineKeyboardButton().setText(B017).setCallbackData(B017));
             row5.add(new InlineKeyboardButton().setText(B018).setCallbackData(B018));
 
-            List<InlineKeyboardButton> row6 = new ArrayList<>();
-            row6.add(new InlineKeyboardButton().setText(B003).setCallbackData(B003));
-            row6.add(new InlineKeyboardButton().setText(B004).setCallbackData(B004));
+            List<InlineKeyboardButton> row6 = new ArrayList<>(1);
+            row6.add(new InlineKeyboardButton().setText(B019).setCallbackData(B019));
+
+            List<InlineKeyboardButton> row7 = new ArrayList<>(2);
+            row7.add(new InlineKeyboardButton().setText(B003).setCallbackData(B003));
+            row7.add(new InlineKeyboardButton().setText(B004).setCallbackData(B004));
 
             // Добавление строк в клавиатуру
             rowsInline.add(row1);
@@ -344,6 +394,7 @@ class Functions
             rowsInline.add(row4);
             rowsInline.add(row5);
             rowsInline.add(row6);
+            rowsInline.add(row7);
 
             // Установка клавиатуры
             markupInline.setKeyboard(rowsInline);
@@ -353,7 +404,10 @@ class Functions
         return offerEventM;
     }
 
-    static SendMessage setTitle(String... mes)
+    /**
+     * Пункт B010. Название мероприятия
+     */
+    static SendMessage setTitle(long userId, String... messageText)
     {
         SendMessage message = new SendMessage();
         message.setText("Введите название мероприятия");
@@ -361,17 +415,20 @@ class Functions
         return message;
     }
 
-    static SendMessage inputTitle(String... mes)
+    /**
+     * Ввод названия
+     */
+    static SendMessage inputTitle(long userId, String... messageText)
     {
-        SendMessage message = new SendMessage();
-        textInputReply(message, mes[0]);
+        Events.setEventParam(0, messageText[0], userId);
 
-        Events.setEvent(B010, mes[0], Integer.parseInt(mes[1]));
-
-        return message;
+        return getInputReplyMessage(messageText[0]);
     }
 
-    static SendMessage setDescription(String... mes)
+    /**
+     * Пункт B011. Добавление описания
+     */
+    static SendMessage setDescription(long userId, String... messageText)
     {
         SendMessage message = new SendMessage();
         message.setText("Введите краткое описание мероприятия");
@@ -379,20 +436,25 @@ class Functions
         return message;
     }
 
-    static SendMessage inputDescription(String... mes)
+    /**
+     * Ввод описания
+     */
+    static SendMessage inputDescription(long userId, String... messageText)
     {
-        SendMessage message = new SendMessage();
-        textInputReply(message, mes[0]);
+        Events.setEventParam(1, messageText[0], userId);
 
-        Events.setEvent(B011, mes[0], Integer.parseInt(mes[1]));
-
-        return message;
+        return getInputReplyMessage(messageText[0]);
     }
 
-    static SendMessage setUniversityE(String... mes)
+    /**
+     * Пункт B012. Выбор университета
+     */
+    static SendMessage setUniversityE(long userId, String... messageText)
     {
         if (setUniversityEM != null && !EnumTable.isChanged("university_list"))
+        {
             return setUniversityEM;
+        }
 
         synchronized (Function.class)
         {
@@ -410,25 +472,32 @@ class Functions
         return setUniversityEM;
     }
 
-    static SendMessage inputUniversityE(String... mes)
+    /**
+     * Ввод университета
+     */
+    static SendMessage inputUniversityE(long userId, String... messageText)
     {
-        SendMessage message = new SendMessage();
-        inputReply(message, mes[0]);
+        Events.setEventParam(2, messageText[0], userId);
 
-        Events.setEvent(B012, mes[0], Integer.parseInt(mes[1]));
-
-        return message;
+        return getInputReplyMessage(messageText[0]);
     }
 
-    static SendMessage setEventsE(String... mes)
+    /**
+     * Пункт B013. Выбор типа мероприятия
+     */
+    static SendMessage setEventsE(long userId, String... messageText)
     {
         if (setEventsEM != null && !EnumTable.isChanged("event_type_list"))
+        {
             return setEventsEM;
+        }
 
         synchronized (Function.class)
         {
             if (setEventsEM != null)
+            {
                 return setEventsEM;
+            }
 
             setEventsEM = new SendMessage();
             setEventsEM.setText("Введите тематику вашего мероприятия");
@@ -439,17 +508,20 @@ class Functions
         return setEventsEM;
     }
 
-    static SendMessage inputEvent(String... mes)
+    /**
+     * Ввод типа мероприятия
+     */
+    static SendMessage inputEvent(long userId, String... messageText)
     {
-        SendMessage message = new SendMessage();
-        inputReply(message, mes[0]);
+        Events.setEventParam(3, messageText[0], userId);
 
-        Events.setEvent(B013, mes[0], Integer.parseInt(mes[1]));
-
-        return message;
+        return getInputReplyMessage(messageText[0]);
     }
 
-    static SendMessage setPhoto(String... mes)
+    /**
+     * Пункт B014. Установка ссылки на фотографию
+     */
+    static SendMessage setPhoto(long userId, String... messageText)
     {
         SendMessage message = new SendMessage();
         message.setText("Добавьте URL ссылку на фотографию");
@@ -457,20 +529,24 @@ class Functions
         return message;
     }
 
-    static SendMessage inputPhoto(String... mes)
+    /**
+     * Ввод ссылки на фотографию
+     */
+    static SendMessage inputPhoto(long userId, String... messageText)
     {
-        SendMessage message = new SendMessage();
-        textInputReply(message, mes[0]);
+        Events.setEventParam(4, messageText[0], userId);
 
+        SendMessage message = getInputReplyMessage(messageText[0]);
         message.setText(message.getText() +
                 "\n\n❗Проверьте, что ваша картика отображается, в противном случае мы не сможем сформировать ваш пост❗");
-
-        Events.setEvent(B014, mes[0], Integer.parseInt(mes[1]));
 
         return message;
     }
 
-    static SendMessage setLink(String... mes)
+    /**
+     * Пункт B015. Добавление ссылки на пост
+     */
+    static SendMessage setLink(long userId, String... messageText)
     {
         SendMessage message = new SendMessage();
         message.setText("Добавьте ссылку на пост в социальной сети");
@@ -478,155 +554,149 @@ class Functions
         return message;
     }
 
-    static SendMessage inputLink(String... mes)
+    /**
+     * Ввод ссылки на пост
+     */
+    static SendMessage inputLink(long userId, String... messageText)
     {
-        SendMessage message = new SendMessage();
-        textInputReply(message, mes[0]);
+        Events.setEventParam(5, messageText[0], userId);
 
-        Events.setEvent(B015, mes[0], Integer.parseInt(mes[1]));
-
-        return message;
+        return getInputReplyMessage(messageText[0]);
     }
 
-    static SendMessage setData(String... mes)
+    /**
+     * Пункт B016. Установка даты
+     */
+    static SendMessage setData(long userId, String... messageText)
     {
-        SendMessage message = new SendMessage();
-        message.setParseMode("markdown");
-        message.enableMarkdown(true);
-
+        SendMessage message = getMarkdownMessage();
         message.setText("Введите дату мероприятия в данном формате: *ГГГГ-ММ-ДД*");
 
         return message;
     }
 
-    static SendMessage inputData(String... mes)
+    /**
+     * Ввод даты
+     */
+    static SendMessage inputData(long userId, String... messageText)
     {
-        SendMessage message = new SendMessage();
+        SendMessage message = getInputReplyMessage(messageText[0]);
 
         // Проверка формата ввода (ГГГГ-ММ-ДД)
-        boolean flag = true;
-        if (mes[0].length() == 10)
+        try
         {
-            for (int i = 0; i < mes[0].length() && flag; i++)
-            {
-                char ch = mes[0].charAt(i);
-                if (!((ch >= '0' && ch <= '9') || ((i == 4 || i == 7) && ch == '-')))
-                {
-                    flag = false;
-                }
-            }
+            Date.valueOf(messageText[0]);
+            Events.setEventParam(6, messageText[0], userId);
         }
-        else
+        catch (IllegalArgumentException e)
         {
-            flag = false;
-        }
-
-        if (flag)
-        {
-            textInputReply(message, mes[0]);
-            Events.setEvent(Functions.B016, mes[0], Integer.parseInt(mes[1]));
-        }
-        else
-        {
-            message.setParseMode("markdown");
-            message.enableMarkdown(true);
             message.setText("Вы ввели некорректные данные! Повторите ввод: *ГГГГ-ММ-ДД*");
         }
 
         return message;
     }
 
-    static SendMessage setTimeE(String... mes)
+    /**
+     * Пункт B017. Добавление времени
+     */
+    static SendMessage setTimeE(long userId, String... messageText)
     {
-        SendMessage message = new SendMessage();
-        message.setParseMode("markdown");
-        message.enableMarkdown(true);
-
+        SendMessage message = getMarkdownMessage();
         message.setText("Введите время начала мероприятия в данном формате: *ЧЧ:ММ*");
 
         return message;
     }
 
-    static SendMessage inputTimeE(String... mes)
+    /**
+     * Ввод времени
+     */
+    static SendMessage inputTimeE(long userId, String... messageText)
     {
-        SendMessage message = new SendMessage();
+        SendMessage message = getInputReplyMessage(messageText[0]);
 
         // Проверка формата ввода (ЧЧ:ММ)
-        boolean flag = true;
-        if (mes[0].length() == 5)
+        try
         {
-            for (int i = 0; i < mes[0].length() && flag; i++)
-            {
-                char ch = mes[0].charAt(i);
-                if (!((ch >= '0' && ch <= '9') || (i == 2 && ch == ':')))
-                {
-                    flag = false;
-                }
-            }
+            Time.valueOf(messageText[0] + ":00");
+            Events.setEventParam(7, messageText[0], userId);
         }
-
-        if (flag)
+        catch (IllegalArgumentException e)
         {
-            textInputReply(message, mes[0]);
-            Events.setEvent(Functions.B017, mes[0], Integer.parseInt(mes[1]));
-        }
-        else
-        {
-            message.setParseMode("markdown");
-            message.enableMarkdown(true);
-            message.setText("Вы ввели некорректные данные! Повторите ввод: *ММ:ЧЧ*");
+            message.setText("Вы ввели некорректные данные! Повторите ввод: *ЧЧ:ММ*");
         }
 
         return message;
     }
 
-    static SendMessage setPlace(String... mes)
+    /**
+     * Пункт B018. Добавление места
+     */
+    static SendMessage setPlace(long userId, String... messageText)
     {
         SendMessage message = new SendMessage();
-
         message.setText("Введите адрес мероприятия");
 
         return message;
     }
 
-    static SendMessage inputPlace(String... mes)
+    /**
+     * Ввод места
+     */
+    static SendMessage inputPlace(long userId, String... messageText)
     {
-        SendMessage message = new SendMessage();
+        Events.setEventParam(8, messageText[0], userId);
 
-        textInputReply(message, mes[0]);
+        return getInputReplyMessage(messageText[0]);
+    }
 
-        Events.setEvent(Functions.B018, mes[0], Integer.parseInt(mes[1]));
+    /**
+     * Просмотр информации, которую уже ввели
+     */
+    static SendMessage viewData(long userId, String... messageText)
+    {
+        SendMessage message = getMarkdownMessage();
+        addBackButton(message);
+
+        String info = Events.getEventInfo(userId);
+        if (info.equals(""))
+        {
+            info += "Вы пока еще ничего не ввели";
+        }
+        message.setText(info);
 
         return message;
     }
 
-    static SendMessage discardChangesE(String... mes)
+    /**
+     * Отмена добавления мероприятия
+     */
+    static SendMessage discardChangesE(long userId, String... messageText)
     {
+        Events.deleteEvent(Integer.parseInt(messageText[1])); // удаление мероприятия из временного хранилища
+
         SendMessage message = new SendMessage();
         message.setText("Вы отменили добавление нового мероприятия!");
 
-        Events.deleteEvent(Integer.parseInt(mes[1])); // удаление мероприятия из временного хранилища
-
         return message;
     }
 
-    static SendMessage saveToDatabaseE(String... mes)
+    /**
+     * Сохранение мероприятия в БД
+     */
+    static SendMessage saveToDatabaseE(long userId, String... messageText)
     {
-        SendMessage message = new SendMessage();
-        message.setParseMode("markdown");
-        message.enableMarkdown(true);
+        SendMessage message = getMarkdownMessage();
 
         try
         {
-            String info = Events.getEventInfo(Integer.parseInt(mes[1]));
-            Events.downloadEventToDatabase(Integer.parseInt(mes[1]));
+            String info = Events.getEventInfo(userId);
+            Events.downloadEventToDatabase(userId);
             message.setText("Вы добавили новое мероприятие!\n\n" + info);
         }
         catch (SQLException e)
         {
+            message.setText(e.getMessage());
             addBackButton(message);
-            message.setText("Вы ввели неполные данные! *Обязательные* для заполнения поля:\nНазвание\nОписание" +
-                    "\nУниверситет\nТематика\nСсылка на фотографию\nСсылка на пост\nДата");
         }
 
         return message;
@@ -634,30 +704,35 @@ class Functions
 
     ////////////////////////////////////////////////////
 
-    private static void textInputReply(SendMessage message, String text)
+    /**
+     * Шаблон сообщения ответа ввод данных
+     */
+    private static SendMessage getInputReplyMessage(String text)
     {
-        message.setParseMode("markdown");
-        message.enableMarkdown(true);
-
-        message.setText("Вы ввели: *" + text + "*" +
-                "\n\nВы можете изменить данные путем повторного ввода");
-
-        addBackButton(message);
-    }
-
-    private static void inputReply(SendMessage message, String text)
-    {
-        message.setParseMode("markdown");
-        message.enableMarkdown(true);
-
-        // Обновление данных мероприятий
+        SendMessage message = getMarkdownMessage();
 
         message.setText("Вы выбрали: *" + text + "*" +
-                "\n\nВы можете изменить свой выбор");
-
+                "\n\nВы можете изменить данные путем повторного ввода");
         addBackButton(message);
+
+        return message;
     }
 
+    /**
+     * Получение сообщения, с настроенной Markdown разметкой
+     */
+    private static SendMessage getMarkdownMessage()
+    {
+        SendMessage sendMessage = new SendMessage();
+        sendMessage.enableMarkdown(true);
+        sendMessage.setParseMode("markdown");
+
+        return sendMessage;
+    }
+
+    /**
+     * Добавление в сообщение списка университетов
+     */
     private static void addUniversities(SendMessage message)
     {
         // Inline keyboard
@@ -683,6 +758,9 @@ class Functions
         message.setReplyMarkup(markupInline);
     }
 
+    /**
+     * Добавление в сообщение списка тем мероприятий
+     */
     private static void addEvents(SendMessage message)
     {
         // Inline keyboard
@@ -708,6 +786,9 @@ class Functions
         message.setReplyMarkup(markupInline);
     }
 
+    /**
+     * Добавление в сообщение кнопки "Готово" ("Назад")
+     */
     private static void addBackButton(SendMessage message)
     {
         InlineKeyboardMarkup markupInline = new InlineKeyboardMarkup();

@@ -11,11 +11,17 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+/**
+ * Класс-сборщик мероприятий
+ */
 public class EventCollector implements Runnable
 {
+    /**
+     * Инициализирует необходимые поля
+     */
     public EventCollector()
     {
-        threadPool = Executors.newFixedThreadPool(10);
+        threadPool = Executors.newFixedThreadPool(5);
 
         Thread thread = new Thread(this, "EventCollector thread");
         thread.start();
@@ -24,48 +30,72 @@ public class EventCollector implements Runnable
     @Override
     public void run()
     {
-        while (true)
+//        try
+//        {
+////            int j = 9;
+//            Vector<Callable<Void>> tasks = new Vector<>(5);
+//            for (int i = 0; i < 5; i++)
+//            {
+//                threadPool.submit(() ->
+//                {
+//                    System.out.println(i);
+//
+//                    return null;
+//                });
+//            }
+//            //threadPool.invokeAll(tasks);
+//        }
+//        catch (Exception e){}
+
+
+        //while (true)
         {
-            UserGroups ug1 = new UserGroups(1, 2);
-            ActualUniversityEvents aue1 = new ActualUniversityEvents(1);
-
-            ArticlesSorter.set(aue1, ug1);
-
             try
             {
                 // Получение индекса для следующего времени для отправки и списка уиверситетов
                 int timeIndex = EnumTable.getNextTimeIndex();
                 LinkedList<Integer> universityIndexes = EnumTable.getUniversityIndexes();
 
+                // Ожидание следующего времени для отправки подборки
+                //Thread.sleep(countTimeForNextMessage(timeIndex));
+
                 // Добавление задач для генерирования подборок
-                Vector<Callable<Void>> tasks = new Vector<>();
                 for (Integer universityIndex : universityIndexes)
                 {
-                    tasks.add(() ->
+                    threadPool.submit(() ->
                     {
-                        UserGroups ug = new UserGroups(universityIndex, timeIndex);
-                        ActualUniversityEvents aue = new ActualUniversityEvents(universityIndex);
+                    UserGroups ug = new UserGroups(universityIndex, 8);
+                    ActualUniversityEvents aue = new ActualUniversityEvents(universityIndex);
 
+                    // Если группа не пустая и есть мероприятия, то запускаем сортировщик
+                    if (!aue.isEmpty() && !ug.isEmpty())
+                    {
+                        System.out.println(Thread.currentThread());
                         ArticlesSorter.set(aue, ug);
+                    }
 
                         return null;
                     });
+
                 }
 
                 // Выполнение и ожидание завершения задач
-                threadPool.invokeAll(tasks);
-                threadPool.shutdown();
-
-                // Ожидание следующего времени для отправки подборки
-                Thread.sleep(countTimeForNextMessage(timeIndex));
+                //threadPool.invokeAll(tasks);
+                //threadPool.shutdown();
             }
-            catch (InterruptedException e)
+            catch (Exception e)
             {
-                int a = 8;
             }
         }
     }
 
+
+
+    /**
+     * Подсчет времени до следующего сообщения
+     * @param timeIndex Индекс времени следующего сообщения
+     * @return Время в миллисекундах
+     */
     private int countTimeForNextMessage(int timeIndex)
     {
         LocalTime messageTime = EnumTable.getTime(timeIndex);
@@ -88,6 +118,6 @@ public class EventCollector implements Runnable
         return result * 1000;
     }
 
-
-    private ExecutorService threadPool;
+    // Пул потоков
+    private static ExecutorService threadPool;
 }
