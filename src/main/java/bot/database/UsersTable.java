@@ -33,14 +33,18 @@ public class UsersTable
         insertEventsPS = connection.prepareStatement("INSERT INTO users_events (user_id, event) VALUES (?, " +
                 "(SELECT id FROM event_type_list WHERE name = ?))");
 
-        getUsersEventsTypePS = connection.prepareStatement("(SELECT u.user_id, 0 events" +
-                " FROM users u LEFT JOIN users_events ue on u.user_id = ue.user_id" +
-                " WHERE ue.event is NULL && u.university = ? && u.time = ?)" +
-                "UNION ALL" +
-                "(SELECT u.user_id, ue.event" +
-                " FROM users_events ue LEFT JOIN users u ON ue.user_id = u.user_id" +
-                " WHERE u.university = ? && u.time = ?" +
-                " ORDER BY ue.user_id)");
+        getUsersEventsTypePS = new PreparedStatement[5];
+        for (int i = 0; i < 5; i++)
+        {
+            getUsersEventsTypePS[i] = connection.prepareStatement("(SELECT u.user_id, 0 events" +
+                    " FROM users u LEFT JOIN users_events ue on u.user_id = ue.user_id" +
+                    " WHERE ue.event is NULL && u.university = ? && u.time = ?)" +
+                    "UNION ALL" +
+                    "(SELECT u.user_id, ue.event" +
+                    " FROM users_events ue LEFT JOIN users u ON ue.user_id = u.user_id" +
+                    " WHERE u.university = ? && u.time = ?" +
+                    " ORDER BY ue.user_id)");
+        }
     }
 
     /**
@@ -124,16 +128,20 @@ public class UsersTable
      * @param time       Идентификатор времени для получения
      * @return Пользователи и их мероприятия
      */
-    synchronized public static ResultSet getUsersEventsType(int university, int time)
+    public static ResultSet getUsersEventsType(int university, int time)
     {
         try
         {
-            getUsersEventsTypePS.setInt(1, university);
-            getUsersEventsTypePS.setInt(2, time);
-            getUsersEventsTypePS.setInt(3, university);
-            getUsersEventsTypePS.setInt(4, time);
+            // Получение id потока (Каждый preparedStatement выполняется в своем потоке,
+            // на один preparedStatement один ResultSet)
+            int id = (int)Thread.currentThread().getId() % 5;
 
-            return getUsersEventsTypePS.executeQuery();
+            getUsersEventsTypePS[id].setInt(1, university);
+            getUsersEventsTypePS[id].setInt(2, time);
+            getUsersEventsTypePS[id].setInt(3, university);
+            getUsersEventsTypePS[id].setInt(4, time);
+
+            return getUsersEventsTypePS[id].executeQuery();
         }
         catch (SQLException e)
         {
@@ -171,5 +179,5 @@ public class UsersTable
     private static PreparedStatement deleteEventsPS;        // удаление мероприятий пользователя
     private static PreparedStatement insertEventsPS;        // вставка мероприятий пользователя
 
-    private static PreparedStatement getUsersEventsTypePS;  // получение пользователей с их мероприятиями
+    private static PreparedStatement[] getUsersEventsTypePS;  // получение пользователей с их мероприятиями
 }

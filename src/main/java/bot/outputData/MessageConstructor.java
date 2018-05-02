@@ -114,7 +114,7 @@ public class MessageConstructor
 
             messageText += '\n' + page.getUrl();
 
-            System.out.println(messageText);
+            //System.out.println(messageText);
             return messageText;
         }
         catch (Exception e)

@@ -24,10 +24,15 @@ public class EventsTable
                 "(SELECT id FROM event_type_list WHERE name = ?), " +
                 "?, ?, ?, ?)");
 
-        getEventsPS = connection.prepareStatement("SELECT  name, description, university, type, photo, refference, DATE(datetime) date, TIME(datetime) time, place " +
-                "FROM events " +
-                "WHERE checked = TRUE && university = ? && (datetime >= NOW()) " +
-                "ORDER BY datetime");
+        getEventsPS = new PreparedStatement[5];
+        for (int i = 0; i < 5; i++)
+        {
+            getEventsPS[i] = connection.prepareStatement("SELECT  name, description, university, type, photo, refference, DATE(datetime) date, TIME(datetime) time, place " +
+                    "FROM events " +
+                    "WHERE checked = TRUE && university = ? && (datetime >= NOW()) " +
+                    "ORDER BY datetime");
+        }
+
     }
 
     /**
@@ -66,13 +71,17 @@ public class EventsTable
      * @param university Идентификатор университета
      * @return Список мероприятий, null если ошибка
      */
-    synchronized public static ResultSet getEvents(int university)
+    public synchronized static ResultSet getEvents(int university)
     {
         try
         {
-            getEventsPS.setInt(1, university);
+            // Получение id потока (Каждый preparedStatement выполняется в своем потоке,
+            // на один preparedStatement один ResultSet)
+            int id = (int)Thread.currentThread().getId() % 5;
 
-            return getEventsPS.executeQuery();
+            getEventsPS[id].setInt(1, university);
+
+            return getEventsPS[id].executeQuery();
         }
         catch (SQLException e)
         {
@@ -83,5 +92,6 @@ public class EventsTable
 
     // Шаблоны запросов
     private static PreparedStatement insertPS;      // добавление нового мероприятия
-    private static PreparedStatement getEventsPS;   // получение мероприятий из одного университета
+    private static PreparedStatement[] getEventsPS;   // получение мероприятий из одного университета
+
 }

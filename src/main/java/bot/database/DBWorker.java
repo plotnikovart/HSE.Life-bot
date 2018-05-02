@@ -5,6 +5,7 @@ import java.util.Vector;
 
 import com.mysql.fabric.jdbc.FabricMySQLDriver;
 
+// todo пул соединений
 
 /**
  * Подключение к базе данных

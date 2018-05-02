@@ -21,7 +21,7 @@ public class EventCollector implements Runnable
      */
     public EventCollector()
     {
-        threadPool = Executors.newFixedThreadPool(5);
+        threadPool = Executors.newFixedThreadPool(10);
 
         Thread thread = new Thread(this, "EventCollector thread");
         thread.start();
@@ -30,25 +30,7 @@ public class EventCollector implements Runnable
     @Override
     public void run()
     {
-//        try
-//        {
-////            int j = 9;
-//            Vector<Callable<Void>> tasks = new Vector<>(5);
-//            for (int i = 0; i < 5; i++)
-//            {
-//                threadPool.submit(() ->
-//                {
-//                    System.out.println(i);
-//
-//                    return null;
-//                });
-//            }
-//            //threadPool.invokeAll(tasks);
-//        }
-//        catch (Exception e){}
-
-
-        //while (true)
+        while (true)
         {
             try
             {
@@ -59,36 +41,34 @@ public class EventCollector implements Runnable
                 // Ожидание следующего времени для отправки подборки
                 //Thread.sleep(countTimeForNextMessage(timeIndex));
 
+                Vector<Callable<Void>> tasks = new Vector<>();
                 // Добавление задач для генерирования подборок
                 for (Integer universityIndex : universityIndexes)
                 {
-                    threadPool.submit(() ->
+                    tasks.add(() ->
                     {
-                    UserGroups ug = new UserGroups(universityIndex, 8);
-                    ActualUniversityEvents aue = new ActualUniversityEvents(universityIndex);
+                        UserGroups ug = new UserGroups(universityIndex, timeIndex);
+                        ActualUniversityEvents aue = new ActualUniversityEvents(universityIndex);
 
-                    // Если группа не пустая и есть мероприятия, то запускаем сортировщик
-                    if (!aue.isEmpty() && !ug.isEmpty())
-                    {
-                        System.out.println(Thread.currentThread());
-                        ArticlesSorter.set(aue, ug);
-                    }
+                        // Если группа не пустая и есть мероприятия, то запускаем сортировщик
+                        if (!aue.isEmpty() && !ug.isEmpty())
+                        {
+                            ArticlesSorter.set(aue, ug);
+                        }
 
                         return null;
                     });
-
                 }
 
                 // Выполнение и ожидание завершения задач
-                //threadPool.invokeAll(tasks);
-                //threadPool.shutdown();
+                threadPool.invokeAll(tasks);
+                threadPool.shutdown();
             }
             catch (Exception e)
             {
             }
         }
     }
-
 
 
     /**

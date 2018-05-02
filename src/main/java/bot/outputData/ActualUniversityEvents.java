@@ -19,13 +19,19 @@ class ActualUniversityEvents implements Iterable<Event>
      */
     ActualUniversityEvents(int universityIndex)
     {
-        events = new LinkedList<>();
+        // Получение мероприятий
+        System.out.println(Thread.currentThread().getId());
         ResultSet resultSet = EventsTable.getEvents(universityIndex);
+        events = new LinkedList<>();
+
+        String answer = "" + universityIndex + '\n';
+        //System.out.println(universityIndex);
 
         try
         {
             while (resultSet.next())
             {
+                answer += resultSet.getString(1) + " ";
                 String[] params = new String[Event.PARAM_NUMBER];
                 for (int i = 0; i < Event.PARAM_NUMBER; i++)
                 {
@@ -33,11 +39,12 @@ class ActualUniversityEvents implements Iterable<Event>
                 }
                 events.add(new Event(params));
             }
+
+            //System.out.println(answer + '\n' + Thread.currentThread());
         }
         catch (SQLException e)
         {
         }
-
     }
 
     /**
