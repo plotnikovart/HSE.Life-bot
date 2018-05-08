@@ -1,8 +1,10 @@
 package bot.outputData;
 
+import bot.database.DBWorker;
 import bot.database.EventsTable;
 import bot.inputData.Event;
 
+import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Iterator;
@@ -14,24 +16,24 @@ import java.util.LinkedList;
 class ActualUniversityEvents implements Iterable<Event>
 {
     /**
-     * Инициализаця списка с меоприятиями
+     * Инициализаця списка с актуальными мероприятиями
      * @param universityIndex Индекс университета
      */
     ActualUniversityEvents(int universityIndex)
     {
-        // Получение мероприятий
-        System.out.println(Thread.currentThread().getId());
-        ResultSet resultSet = EventsTable.getEvents(universityIndex);
-        events = new LinkedList<>();
-
-        String answer = "" + universityIndex + '\n';
-        //System.out.println(universityIndex);
-
-        try
+        try (Connection connection = DBWorker.getConnection())
         {
+            // Получение актуальных мероприятий
+            ResultSet resultSet = EventsTable.getEvents(universityIndex, connection);
+            events = new LinkedList<>();
+
+            if (resultSet == null)
+            {
+                return;
+            }
+
             while (resultSet.next())
             {
-                answer += resultSet.getString(1) + " ";
                 String[] params = new String[Event.PARAM_NUMBER];
                 for (int i = 0; i < Event.PARAM_NUMBER; i++)
                 {
@@ -39,11 +41,10 @@ class ActualUniversityEvents implements Iterable<Event>
                 }
                 events.add(new Event(params));
             }
-
-            //System.out.println(answer + '\n' + Thread.currentThread());
         }
         catch (SQLException e)
         {
+            e.printStackTrace();
         }
     }
 

@@ -1,5 +1,7 @@
 package bot.database;
 
+import com.mchange.v2.c3p0.ComboPooledDataSource;
+
 import java.sql.*;
 import java.util.List;
 
@@ -10,41 +12,43 @@ public class UsersTable
 {
     /**
      * Иницализация коннектора к базе и шаблонов запросов
-     * @param connection Коннектор
+     * @param dataSource Пул соединений к БД
      * @throws SQLException Произошла ошибка при формировании запросов
      */
-    static void initialize(Connection connection) throws SQLException
+    static void initialize(ComboPooledDataSource dataSource)
     {
+        UsersTable.dataSource = dataSource;
+
         // Инициализация шаблонов запросов
-        checkPS = connection.prepareStatement("SELECT user_id FROM users WHERE user_id = ?");
-
-        updatePS = connection.prepareStatement("UPDATE users SET " +
-                "university = (SELECT id FROM university_list u WHERE u.name = ?), " +
-                "time = (SELECT id FROM time_list t WHERE t.time = ?)  " +
-                "WHERE user_id = ?");
-
-        insertPS = connection.prepareStatement("INSERT INTO users (user_id, university, time) " +
-                "VALUES (?, " +
-                "(SELECT id FROM university_list u WHERE u.name = ?), " +
-                "(SELECT id FROM time_list t WHERE t.time = ?))");
-
-        deleteEventsPS = connection.prepareStatement("DELETE FROM users_events WHERE user_id = ?");
-
-        insertEventsPS = connection.prepareStatement("INSERT INTO users_events (user_id, event) VALUES (?, " +
-                "(SELECT id FROM event_type_list WHERE name = ?))");
-
-        getUsersEventsTypePS = new PreparedStatement[5];
-        for (int i = 0; i < 5; i++)
-        {
-            getUsersEventsTypePS[i] = connection.prepareStatement("(SELECT u.user_id, 0 events" +
-                    " FROM users u LEFT JOIN users_events ue on u.user_id = ue.user_id" +
-                    " WHERE ue.event is NULL && u.university = ? && u.time = ?)" +
-                    "UNION ALL" +
-                    "(SELECT u.user_id, ue.event" +
-                    " FROM users_events ue LEFT JOIN users u ON ue.user_id = u.user_id" +
-                    " WHERE u.university = ? && u.time = ?" +
-                    " ORDER BY ue.user_id)");
-        }
+//        checkPS = connection.prepareStatement("SELECT user_id FROM users WHERE user_id = ?");
+//
+//        updatePS = connection.prepareStatement("UPDATE users SET " +
+//                "university = (SELECT id FROM university_list u WHERE u.name = ?), " +
+//                "time = (SELECT id FROM time_list t WHERE t.time = ?)  " +
+//                "WHERE user_id = ?");
+//
+//        insertPS = connection.prepareStatement("INSERT INTO users (user_id, university, time) " +
+//                "VALUES (?, " +
+//                "(SELECT id FROM university_list u WHERE u.name = ?), " +
+//                "(SELECT id FROM time_list t WHERE t.time = ?))");
+//
+//        deleteEventsPS = connection.prepareStatement("DELETE FROM users_events WHERE user_id = ?");
+//
+//        insertEventsPS = connection.prepareStatement("INSERT INTO users_events (user_id, event) VALUES (?, " +
+//                "(SELECT id FROM event_type_list WHERE name = ?))");
+//
+//        getUsersEventsTypePS = new PreparedStatement[5];
+//        for (int i = 0; i < 5; i++)
+//        {
+//            getUsersEventsTypePS[i] = connection.prepareStatement("(SELECT u.user_id, 0 events" +
+//                    " FROM users u LEFT JOIN users_events ue ON u.user_id = ue.user_id" +
+//                    " WHERE ue.event IS NULL && u.university = ? && u.time = ?)" +
+//                    "UNION ALL" +
+//                    "(SELECT u.user_id, ue.event" +
+//                    " FROM users_events ue LEFT JOIN users u ON ue.user_id = u.user_id" +
+//                    " WHERE u.university = ? && u.time = ?" +
+//                    " ORDER BY ue.user_id)");
+//        }
     }
 
     /**
@@ -53,47 +57,49 @@ public class UsersTable
      * @param university Название университета
      * @param time       Время
      * @param events     Список мероприятий
-     * @throws SQLException Были переданы некорректные параметры
+     * @throws SQLException Были переданы некорректные параметры, ошибка подключения к БД
      */
     public static void addUser(long id, String university, String time, List<String> events) throws SQLException
     {
-        if (checkPS == null)
+        try (Connection connection = dataSource.getConnection())
         {
-            throw new SQLException("Коннектор не определен");
-        }
+            // Если пользователь уже есть в БД
+            if (isContained(id, connection))
+            {
+                // Обновляем данные пользователя
+                PreparedStatement updatePS = connection.prepareStatement(UPDATE);
+                updatePS.setString(1, university);
+                updatePS.setString(2, time);
+                updatePS.setLong(3, id);
 
-        // Если пользователь уже есть в БД
-        if (isContained(id))
-        {
-            // Обновляем данные пользователя
-            updatePS.setString(1, university);
-            updatePS.setString(2, time);
-            updatePS.setLong(3, id);
+                updatePS.execute();
 
-            updatePS.execute();
+                // Очистка мероприятий пользователя
+                PreparedStatement deleteEventsPS = connection.prepareStatement(DELETE_EVENTS);
+                deleteEventsPS.setLong(1, id);
 
-            // Очистка мероприятий пользователя
-            deleteEventsPS.setLong(1, id);
+                deleteEventsPS.execute();
+            }
+            else
+            {
+                // Вставляем нового пользователя
+                PreparedStatement insertPS = connection.prepareStatement(INSERT);
+                insertPS.setLong(1, id);
+                insertPS.setString(2, university);
+                insertPS.setString(3, time);
 
-            deleteEventsPS.execute();
-        }
-        else
-        {
-            // Вставляем нового пользователя
-            insertPS.setLong(1, id);
-            insertPS.setString(2, university);
-            insertPS.setString(3, time);
+                insertPS.execute();
+            }
 
-            insertPS.execute();
-        }
+            // Вставляем мероприятия пользователя
+            PreparedStatement insertEventsPS = connection.prepareStatement(INSERT_EVENTS);
+            for (String event : events)
+            {
+                insertEventsPS.setLong(1, id);
+                insertEventsPS.setString(2, event);
 
-        // Вставляем мероприятия пользователя
-        for (String event : events)
-        {
-            insertEventsPS.setLong(1, id);
-            insertEventsPS.setString(2, event);
-
-            insertEventsPS.execute();
+                insertEventsPS.execute();
+            }
         }
     }
 
@@ -104,12 +110,13 @@ public class UsersTable
      */
     public static void addDefaultUser(long id)
     {
-        try
+        try (Connection connection = dataSource.getConnection())
         {
             // Если такого пользователя нет, то вставляем его
-            if (!isContained(id))
+            if (!isContained(id, connection))
             {
                 // Вставляем нового пользователя
+                PreparedStatement insertPS = connection.prepareStatement(INSERT);
                 insertPS.setLong(1, id);
                 insertPS.setString(2, "НИУ ВШЭ (Москва)");
                 insertPS.setString(3, "10:00");
@@ -119,6 +126,7 @@ public class UsersTable
         }
         catch (SQLException e)  // Если ошибка, то ничего не делаем
         {
+            e.printStackTrace();
         }
     }
 
@@ -126,25 +134,24 @@ public class UsersTable
      * Получение списка пользователей с их мероприятиями
      * @param university Идентификатор университета
      * @param time       Идентификатор времени для получения
+     * @param connection Коннектор к БД, нужен для параллельной работы
      * @return Пользователи и их мероприятия
      */
-    public static ResultSet getUsersEventsType(int university, int time)
+    public static ResultSet getUsersEventsType(int university, int time, Connection connection)
     {
         try
         {
-            // Получение id потока (Каждый preparedStatement выполняется в своем потоке,
-            // на один preparedStatement один ResultSet)
-            int id = (int)Thread.currentThread().getId() % 5;
+            PreparedStatement getUsersEventsTypePS = connection.prepareStatement(GET_USERS_EVENTS_TYPE);
+            getUsersEventsTypePS.setInt(1, university);
+            getUsersEventsTypePS.setInt(2, time);
+            getUsersEventsTypePS.setInt(3, university);
+            getUsersEventsTypePS.setInt(4, time);
 
-            getUsersEventsTypePS[id].setInt(1, university);
-            getUsersEventsTypePS[id].setInt(2, time);
-            getUsersEventsTypePS[id].setInt(3, university);
-            getUsersEventsTypePS[id].setInt(4, time);
-
-            return getUsersEventsTypePS[id].executeQuery();
+            return getUsersEventsTypePS.executeQuery();
         }
         catch (SQLException e)
         {
+            e.printStackTrace();
             return null;
         }
     }
@@ -155,14 +162,13 @@ public class UsersTable
      * @return Сдержится или нет
      * @throws SQLException Ошибка обращения к БД
      */
-    private static boolean isContained(long id) throws SQLException
+    private static boolean isContained(long id, Connection connection) throws SQLException
     {
         boolean contains = false;
+        PreparedStatement preparedStatement = connection.prepareStatement(CHECK);
+        preparedStatement.setLong(1, id);
 
-        checkPS.setLong(1, id);
-
-        ResultSet resultSet = checkPS.executeQuery();
-
+        ResultSet resultSet = preparedStatement.executeQuery();
         if (resultSet.next())
         {
             contains = true;
@@ -172,12 +178,43 @@ public class UsersTable
     }
 
 
-    // Шаблоны запросов
-    private static PreparedStatement checkPS;               // проверка, содержится ли пользователь в базе
-    private static PreparedStatement updatePS;              // обновление университета и времени
-    private static PreparedStatement insertPS;              // вставка id, университета, времени
-    private static PreparedStatement deleteEventsPS;        // удаление мероприятий пользователя
-    private static PreparedStatement insertEventsPS;        // вставка мероприятий пользователя
+    private static ComboPooledDataSource dataSource;            // пул коннекторов к БД
 
-    private static PreparedStatement[] getUsersEventsTypePS;  // получение пользователей с их мероприятиями
+    // Шаблоны запросов
+    private static final String CHECK =                         // проверка, содержится ли пользователь в базе
+            "SELECT user_id FROM users WHERE user_id = ?";
+    private static final String UPDATE =                        // обновление университета и времени
+            "UPDATE users SET " +
+                    "university = (SELECT id FROM university_list u WHERE u.name = ?), " +
+                    "time = (SELECT id FROM time_list t WHERE t.time = ?)  " +
+                    "WHERE user_id = ?";
+    private static final String INSERT =                         // вставка id, университета, времени
+            "INSERT INTO users (user_id, university, time) " +
+                    "VALUES (?, " +
+                    "(SELECT id FROM university_list u WHERE u.name = ?), " +
+                    "(SELECT id FROM time_list t WHERE t.time = ?))";
+    private static final String DELETE_EVENTS =                 // удаление мероприятий пользователя
+            "DELETE FROM users_events WHERE user_id = ?";
+    private static final String INSERT_EVENTS =                 // вставка мероприятий пользователя
+            "INSERT INTO users_events (user_id, event) VALUES (?, " +
+                    "(SELECT id FROM event_type_list WHERE name = ?))";
+
+    private static final String GET_USERS_EVENTS_TYPE =         // получение пользователей с их мероприятиями
+            "(SELECT u.user_id, 0 events" +
+                    " FROM users u LEFT JOIN users_events ue ON u.user_id = ue.user_id" +
+                    " WHERE ue.event IS NULL && u.university = ? && u.time = ?)" +
+                    "UNION ALL" +
+                    "(SELECT u.user_id, ue.event" +
+                    " FROM users_events ue LEFT JOIN users u ON ue.user_id = u.user_id" +
+                    " WHERE u.university = ? && u.time = ?" +
+                    " ORDER BY ue.user_id)";
+
+
+    //    private static PreparedStatement checkPS;               // проверка, содержится ли пользователь в базе
+    //    private static PreparedStatement updatePS;              // обновление университета и времени
+    //    private static PreparedStatement insertPS;              // вставка id, университета, времени
+    //    private static PreparedStatement deleteEventsPS;        // удаление мероприятий пользователя
+    //    private static PreparedStatement insertEventsPS;        // вставка мероприятий пользователя
+    //
+    //    private static PreparedStatement[] getUsersEventsTypePS;  // получение пользователей с их мероприятиями
 }

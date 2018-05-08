@@ -8,7 +8,7 @@ import org.telegram.telegrambots.TelegramBotsApi;
 import org.telegram.telegrambots.exceptions.TelegramApiException;
 import org.telegram.telegraph.exceptions.TelegraphException;
 
-import java.sql.SQLException;
+import java.beans.PropertyVetoException;
 
 
 public class Initializer
@@ -28,12 +28,12 @@ public class Initializer
             new TelegramBotsApi().registerBot(myBot);
 
             // Инициализация конструктора сообщений
-            MessageConstructor.initialize(myBot);
+            MessageConstructor.initialize();
 
             // Запуск сборщика мероприятий
             new EventCollector();
         }
-        catch (SQLException e)
+        catch (PropertyVetoException e)
         {
             System.out.println("Ошибка подключения к базе данных");
         }

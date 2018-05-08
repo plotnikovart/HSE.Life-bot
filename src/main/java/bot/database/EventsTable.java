@@ -2,6 +2,7 @@ package bot.database;
 
 
 import bot.inputData.Event;
+import com.mchange.v2.c3p0.ComboPooledDataSource;
 
 import java.sql.*;
 
@@ -12,27 +13,22 @@ public class EventsTable
 {
     /**
      * Иницализация коннектора к базе и шаблонов запросов
-     * @param connection Коннектор
-     * @throws SQLException Произошла ошибка при формировании запросов
+     * @param dataSource Пул коннекторов к БД
      */
-    static void initialize(Connection connection) throws SQLException
+    static void initialize(ComboPooledDataSource dataSource)
     {
-        // Инициализация шаблонов запросов
-        insertPS = connection.prepareStatement("INSERT INTO events (name, description, university, type, photo, refference, datetime, place) " +
-                "VALUES (?, ?, " +
-                "(SELECT id FROM university_list WHERE name = ?), " +
-                "(SELECT id FROM event_type_list WHERE name = ?), " +
-                "?, ?, ?, ?)");
-
-        getEventsPS = new PreparedStatement[5];
-        for (int i = 0; i < 5; i++)
-        {
-            getEventsPS[i] = connection.prepareStatement("SELECT  name, description, university, type, photo, refference, DATE(datetime) date, TIME(datetime) time, place " +
-                    "FROM events " +
-                    "WHERE checked = TRUE && university = ? && (datetime >= NOW()) " +
-                    "ORDER BY datetime");
-        }
-
+        EventsTable.dataSource = dataSource;
+//        // Инициализация шаблонов запросов
+//        insertPS = connection.prepareStatement();
+//
+//        getEventsPS = new PreparedStatement[5];
+//        for (int i = 0; i < 5; i++)
+//        {
+//            getEventsPS[i] = connection.prepareStatement("SELECT  name, description, university, type, photo, refference, DATE(datetime) date, TIME(datetime) time, place " +
+//                    "FROM events " +
+//                    "WHERE checked = TRUE && university = ? && (datetime >= NOW()) " +
+//                    "ORDER BY datetime");
+//        }
     }
 
     /**
@@ -42,28 +38,30 @@ public class EventsTable
      */
     public static void addEvent(String... parameters) throws SQLException
     {
-        if (insertPS == null)
-        {
-            throw new SQLException("Коннектор не определен");
-        }
-
         if (parameters.length != Event.PARAM_NUMBER)
         {
             throw new SQLException("Были переданы не все параметры");
         }
 
-        int i;
-        for (i = 0; i < parameters.length - 3; i++)
-            insertPS.setString(i + 1, parameters[i]);
+        try (Connection connection = dataSource.getConnection())
+        {
+            PreparedStatement insertPS = connection.prepareStatement(INSERT);
 
-        // Вставка даты и времени
-        insertPS.setString(i + 1, parameters[i] + " " + parameters[i + 1]);
+            int i;
+            for (i = 0; i < parameters.length - 3; i++)
+            {
+                insertPS.setString(i + 1, parameters[i]);
+            }
 
-        // Место
-        i++;
-        insertPS.setString(i + 1, parameters[i + 1]);
+            // Вставка даты и времени
+            insertPS.setString(i + 1, parameters[i] + " " + parameters[i + 1]);
 
-        insertPS.execute();
+            // Место
+            i++;
+            insertPS.setString(i + 1, parameters[i + 1]);
+
+            insertPS.execute();
+        }
     }
 
     /**
@@ -71,27 +69,40 @@ public class EventsTable
      * @param university Идентификатор университета
      * @return Список мероприятий, null если ошибка
      */
-    public synchronized static ResultSet getEvents(int university)
+    public static ResultSet getEvents(int university, Connection connection)
     {
         try
         {
-            // Получение id потока (Каждый preparedStatement выполняется в своем потоке,
-            // на один preparedStatement один ResultSet)
-            int id = (int)Thread.currentThread().getId() % 5;
+            PreparedStatement getEventsPS = connection.prepareStatement(GET_EVENTS);
+            getEventsPS.setInt(1, university);
 
-            getEventsPS[id].setInt(1, university);
-
-            return getEventsPS[id].executeQuery();
+            return getEventsPS.executeQuery();
         }
         catch (SQLException e)
         {
+            e.printStackTrace();
             return null;
         }
+    }
+
+    public static void deleteOldEvents(){
 
     }
 
-    // Шаблоны запросов
-    private static PreparedStatement insertPS;      // добавление нового мероприятия
-    private static PreparedStatement[] getEventsPS;   // получение мероприятий из одного университета
 
+    private static ComboPooledDataSource dataSource;
+
+    // Шаблоны запросов
+    private static final String INSERT =            // добавление нового мероприятия
+            "INSERT INTO events (name, description, university, type, photo, refference, datetime, place) " +
+            "VALUES (?, ?, " +
+            "(SELECT id FROM university_list WHERE name = ?), " +
+            "(SELECT id FROM event_type_list WHERE name = ?), " +
+            "?, ?, ?, ?)";
+
+    private static final String GET_EVENTS =        // получение мероприятий из одного университета
+            "SELECT  name, description, university, type, photo, refference, DATE(datetime) date, TIME(datetime) time, place " +
+            "FROM events " +
+            "WHERE checked = TRUE && university = ? && (datetime >= NOW()) " +
+            "ORDER BY datetime";
 }

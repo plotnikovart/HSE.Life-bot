@@ -1,8 +1,10 @@
 package bot.outputData;
 
+import bot.database.DBWorker;
 import bot.database.UsersTable;
 
 import java.math.BigInteger;
+import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
@@ -20,17 +22,17 @@ class UserGroups implements Iterable<UserGroup>
      */
     UserGroups(int universityIndex, int timeIndex)
     {
-        // Получение подходящих пользователей
-        ResultSet usersWithEvents = UsersTable.getUsersEventsType(universityIndex, timeIndex);
-        groups = new TreeMap<>();
-
-        try
+        try (Connection connection = DBWorker.getConnection())
         {
+            // Получение подходящих пользователей
+            ResultSet usersWithEvents = UsersTable.getUsersEventsType(universityIndex, timeIndex, connection);
+            groups = new TreeMap<>();
+
             long currentUser;
             BigInteger currentGroupId = BigInteger.valueOf(0);
 
             // Пустая подборка
-            if (!usersWithEvents.next())
+            if (usersWithEvents == null || !usersWithEvents.next())
             {
                 return;
             }
@@ -64,6 +66,7 @@ class UserGroups implements Iterable<UserGroup>
         }
         catch (SQLException e)
         {
+            e.printStackTrace();
         }
     }
 
@@ -115,9 +118,6 @@ class UserGroups implements Iterable<UserGroup>
  */
 class UserGroup
 {
-    private BigInteger groupId;     // идентификатор группы
-    private LinkedList<Long> users; // список пользователей
-
     /**
      * Инициилизирует группу
      * @param groupId Идентификатор группы
@@ -165,4 +165,7 @@ class UserGroup
     {
         return users;
     }
+
+    private BigInteger groupId;     // идентификатор группы
+    private LinkedList<Long> users; // список пользователей
 }

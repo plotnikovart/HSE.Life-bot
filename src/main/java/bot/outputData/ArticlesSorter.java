@@ -1,6 +1,6 @@
 package bot.outputData;
 
-
+import bot.Bot;
 import bot.inputData.Event;
 
 import java.util.Iterator;
@@ -47,9 +47,14 @@ class ArticlesSorter
                 }
             }
 
-            // Формирование текста сообщения и отправка пользователям
-            String messageText = MessageConstructor.generateArticle(priorityEvents, otherEvents);
-            MessageConstructor.sendMessages(messageText, userGroup.getUsersList());
+            // Формирование текста сообщения
+            String messageText = MessageConstructor.generateMessage(priorityEvents, otherEvents);
+
+            // Отправка сообщения пользователям
+            for (Long userId : userGroup.getUsersList())
+            {
+                Bot.MessageSender.send(userId, messageText);
+            }
 
             // Очистка мероприятий для данной группы пользователей
             priorityEvents = new LinkedList<>();

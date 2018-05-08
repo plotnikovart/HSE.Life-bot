@@ -26,17 +26,14 @@ import java.util.logging.Level;
 public class MessageConstructor
 {
     private static Account account;     // зарегистрированый аккаунт в Telegraph
-    private static Bot bot;             // ссылка на бота
 
     /**
      * Инициализирует Telegraph.Api и регистрирует аккаунт в Telegraph
      * @param bot Ссылка на бота
      * @throws TelegraphException Если не удалось зарегистрировать аккаунт
      */
-    public static void initialize(Bot bot) throws TelegraphException
+    public static void initialize() throws TelegraphException
     {
-        MessageConstructor.bot = bot;
-
         // Инициализация контекста
         TelegraphLogger.setLevel(Level.ALL);
         TelegraphLogger.registerLogger(new ConsoleHandler());
@@ -51,19 +48,60 @@ public class MessageConstructor
     }
 
     /**
-     * Генератор подборок. Создает статью в Telegraph и оборачивает ее в сообщение
+     * Оборачивает статью Telegraph в сообщение
+     * @param priorityEvents   Приоритетные мероприятия
+     * @param otherEvents      Остальные мероприятия
+     * @return Готовое для отправки сообщение
+     */
+    static String generateMessage(LinkedList<Event> priorityEvents, LinkedList<Event> otherEvents)
+    {
+        StringBuilder messageText = new StringBuilder("*[HSEvents]*\n\n");
+
+        // Приоритетные мероприятия
+        if (priorityEvents != null && priorityEvents.size() != 0)
+        {
+            int i = 1;
+            messageText.append("*Приоритетные мероприятия:*\n");
+
+            for (Event event : priorityEvents)
+            {
+                messageText.append(i).append(". ").append(event.getName()).append('\n');
+                i++;
+            }
+
+            messageText.append('\n');
+        }
+
+        // Остальные мероприятия
+        if (otherEvents != null && otherEvents.size() != 0)
+        {
+            int i = 1;
+            messageText.append("*Мероприятия:*\n");
+
+            for (Event event : otherEvents)
+            {
+                messageText.append(i).append(". ").append(event.getName()).append('\n');
+                i++;
+            }
+        }
+
+        // Получение ссылки на статью
+        String articleReference = generateArticle(priorityEvents, otherEvents);
+        messageText.append("\n").append(articleReference);
+
+        return messageText.toString();
+    }
+
+    /**
+     * Генератор подборок. Создает статью в Telegraph
      * @param priorityEvents Приоритетные мероприятия
      * @param otherEvents    Остальные мероприятия
-     * @return Сообщение с ссылкой на telegraph статью
+     * @return Ссылка на Telegraph статью
      */
-    static String generateArticle(LinkedList<Event> priorityEvents, LinkedList<Event> otherEvents)
+    private static String generateArticle(LinkedList<Event> priorityEvents, LinkedList<Event> otherEvents)
     {
         try
         {
-            System.out.println(Thread.currentThread());
-
-            String messageText = "*[HSEvents]*\n\n";        // итоговое сообщение
-            int i = 1;                                      // счетчик мероприятий
             List<Node> allContent = new LinkedList<>();     // контент страницы в Telegraph
 
             // Добавление картинки в начало подборки
@@ -73,32 +111,29 @@ public class MessageConstructor
             // Приоритетные мероприятия
             if (priorityEvents != null && priorityEvents.size() != 0)
             {
+                int i = 1;
                 allContent.add(addNodeContent("Приоритетные мероприятия", "h3"));
-                messageText += "*Приоритетные мероприятия:*\n";
 
                 for (Event event : priorityEvents)
                 {
                     addEvent(i, event, allContent);
-                    messageText += i++ + ". " + event.getName() + '\n';
+                    i++;
                 }
 
                 allContent.add(addNodeContent(null, "hr"));
-                messageText += '\n';
             }
 
             // Остальные мероприятия
             if (otherEvents != null && otherEvents.size() != 0)
             {
-                i = 1;
+                int i = 1;
                 allContent.add(addNodeContent("Мероприятия", "h3"));
-                messageText += "*Мероприятия:*\n";
 
                 for (Event event : otherEvents)
                 {
                     addEvent(i, event, allContent);
-                    messageText += i++ + ". " + event.getName() + '\n';
+                    i++;
                 }
-
             }
 
             // Получение дня недели
@@ -112,40 +147,12 @@ public class MessageConstructor
                     .setAuthorUrl("https://t.me/hse_life")
                     .execute();
 
-            messageText += '\n' + page.getUrl();
-
-            //System.out.println(messageText);
-            return messageText;
+            return page.getUrl();
         }
         catch (Exception e)
         {
+            e.printStackTrace();
             return null;
-        }
-    }
-
-    /**
-     * Отправляет сообщение пользователям
-     * @param messageText Текст сообщения
-     * @param users       Список пользователй
-     */
-    static void sendMessages(String messageText, LinkedList<Long> users)
-    {
-        SendMessage message = new SendMessage();
-        message.enableMarkdown(true);
-        message.setParseMode("markdown");
-        message.setText(messageText);
-
-        for (Long userId : users)
-        {
-            try
-            {
-                message.setChatId(userId);
-                bot.execute(message);
-            }
-            catch (TelegramApiException e)
-            {
-                System.out.println("Пользователь не существует");
-            }
         }
     }
 
@@ -252,10 +259,11 @@ public class MessageConstructor
         public String[] getMonths()
         {
             return new String[] {"января", "февраля", "марта", "апреля", "мая", "июня",
-                    "июля", "августа", "сентября", "октября", "ноября", "декабря"};
+                                 "июля", "августа", "сентября", "октября", "ноября", "декабря"};
         }
     });
 
     // Дни недели
-    private static String[] dayOfWeek = {"", "Воскресенье", "Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота"};
+    private static String[] dayOfWeek = {"", "Воскресенье", "Понедельник", "Вторник", "Среда", "Четверг", "Пятница",
+                                         "Суббота"};
 }

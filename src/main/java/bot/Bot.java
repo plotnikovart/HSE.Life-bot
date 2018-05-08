@@ -2,8 +2,12 @@ package bot;
 
 import bot.inputData.TaskSpreader;
 
+import bot.outputData.MessageConstructor;
+import org.telegram.telegrambots.api.methods.send.SendMessage;
 import org.telegram.telegrambots.api.objects.Update;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
+import org.telegram.telegrambots.exceptions.TelegramApiException;
+import org.telegram.telegraph.exceptions.TelegraphException;
 
 
 /**
@@ -14,7 +18,8 @@ public class Bot extends TelegramLongPollingBot
     Bot()
     {
         super();
-        taskSpreader = new TaskSpreader(this);  // инициализация распределителя задач
+        taskSpreader = new TaskSpreader();  // инициализация распределителя задач
+        MessageSender.initialize(this);
     }
 
     @Override
@@ -54,6 +59,41 @@ public class Bot extends TelegramLongPollingBot
         return botToken;
     }
 
+    /**
+     * Класс для отправки сообщений
+     */
+    public static class MessageSender
+    {
+        static private Bot bot;
+
+        static void initialize(Bot bot)
+        {
+            MessageSender.bot = bot;
+        }
+
+        public static void send(long chatId, String message)
+        {
+            SendMessage sendMessage = new SendMessage();
+            sendMessage.setText(message);
+            sendMessage.enableMarkdown(true);
+            sendMessage.setParseMode("markdown");
+            sendMessage.setChatId(chatId);
+
+            send(sendMessage);
+        }
+
+        public static void send(SendMessage message)
+        {
+            try
+            {
+                bot.execute(message);
+            }
+            catch (TelegramApiException e)
+            {
+                e.printStackTrace();
+            }
+        }
+    }
 
     private TaskSpreader taskSpreader;
     private final String botName = "HSE.Life bot";

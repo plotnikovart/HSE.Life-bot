@@ -2,6 +2,7 @@ package bot.outputData;
 
 
 import bot.database.EnumTable;
+import bot.database.EventsTable;
 
 import java.time.LocalTime;
 import java.util.LinkedList;
@@ -47,13 +48,14 @@ public class EventCollector implements Runnable
                 {
                     tasks.add(() ->
                     {
-                        UserGroups ug = new UserGroups(universityIndex, timeIndex);
+                        UserGroups ug = new UserGroups(universityIndex, 4);
                         ActualUniversityEvents aue = new ActualUniversityEvents(universityIndex);
 
                         // Если группа не пустая и есть мероприятия, то запускаем сортировщик
                         if (!aue.isEmpty() && !ug.isEmpty())
                         {
                             ArticlesSorter.set(aue, ug);
+                            System.out.println(universityIndex);
                         }
 
                         return null;
@@ -62,10 +64,15 @@ public class EventCollector implements Runnable
 
                 // Выполнение и ожидание завершения задач
                 threadPool.invokeAll(tasks);
-                threadPool.shutdown();
+                Thread.sleep(1333333333);
+                //threadPool.awaitTermination();
+
+                // Удаление неактуальных мероприятий
+                EventsTable.deleteOldEvents();
             }
             catch (Exception e)
             {
+                e.printStackTrace();
             }
         }
     }

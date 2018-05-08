@@ -14,14 +14,12 @@ public class TaskSpreader
 {
     /**
      * Распределитель задач.
-     * Инициализация меню, пула потоков, ссылки на бота
-     * @param bot Ссылка на бота (для отправки сообщений)
+     * Инициализация меню, пула потоков
      */
-    public TaskSpreader(Bot bot)
+    public TaskSpreader()
     {
         threadPool = Executors.newFixedThreadPool(5);
         menu = new Menu();
-        this.bot = bot;
     }
 
     /**
@@ -36,17 +34,12 @@ public class TaskSpreader
             // Обращение к меню, получение ответа
             SendMessage message = menu.call(messageText, chatId);
             message.setChatId(chatId);
-            try
-            {
-                bot.execute(message);
-            }
-            catch (Exception e)
-            {
-            }
+
+            // Отправка сообщения
+            Bot.MessageSender.send(message);
         });
     }
 
     private ExecutorService threadPool;     // пул потоков, которые обрабатывают входные сообщения
     private Menu menu;                      // древовидное меню
-    private Bot bot;                        // ссылка на бота (для отправки сообщений)
 }
