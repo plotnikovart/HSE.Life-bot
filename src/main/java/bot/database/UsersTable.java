@@ -13,42 +13,10 @@ public class UsersTable
     /**
      * Иницализация коннектора к базе и шаблонов запросов
      * @param dataSource Пул соединений к БД
-     * @throws SQLException Произошла ошибка при формировании запросов
      */
     static void initialize(ComboPooledDataSource dataSource)
     {
         UsersTable.dataSource = dataSource;
-
-        // Инициализация шаблонов запросов
-//        checkPS = connection.prepareStatement("SELECT user_id FROM users WHERE user_id = ?");
-//
-//        updatePS = connection.prepareStatement("UPDATE users SET " +
-//                "university = (SELECT id FROM university_list u WHERE u.name = ?), " +
-//                "time = (SELECT id FROM time_list t WHERE t.time = ?)  " +
-//                "WHERE user_id = ?");
-//
-//        insertPS = connection.prepareStatement("INSERT INTO users (user_id, university, time) " +
-//                "VALUES (?, " +
-//                "(SELECT id FROM university_list u WHERE u.name = ?), " +
-//                "(SELECT id FROM time_list t WHERE t.time = ?))");
-//
-//        deleteEventsPS = connection.prepareStatement("DELETE FROM users_events WHERE user_id = ?");
-//
-//        insertEventsPS = connection.prepareStatement("INSERT INTO users_events (user_id, event) VALUES (?, " +
-//                "(SELECT id FROM event_type_list WHERE name = ?))");
-//
-//        getUsersEventsTypePS = new PreparedStatement[5];
-//        for (int i = 0; i < 5; i++)
-//        {
-//            getUsersEventsTypePS[i] = connection.prepareStatement("(SELECT u.user_id, 0 events" +
-//                    " FROM users u LEFT JOIN users_events ue ON u.user_id = ue.user_id" +
-//                    " WHERE ue.event IS NULL && u.university = ? && u.time = ?)" +
-//                    "UNION ALL" +
-//                    "(SELECT u.user_id, ue.event" +
-//                    " FROM users_events ue LEFT JOIN users u ON ue.user_id = u.user_id" +
-//                    " WHERE u.university = ? && u.time = ?" +
-//                    " ORDER BY ue.user_id)");
-//        }
     }
 
     /**
@@ -208,13 +176,4 @@ public class UsersTable
                     " FROM users_events ue LEFT JOIN users u ON ue.user_id = u.user_id" +
                     " WHERE u.university = ? && u.time = ?" +
                     " ORDER BY ue.user_id)";
-
-
-    //    private static PreparedStatement checkPS;               // проверка, содержится ли пользователь в базе
-    //    private static PreparedStatement updatePS;              // обновление университета и времени
-    //    private static PreparedStatement insertPS;              // вставка id, университета, времени
-    //    private static PreparedStatement deleteEventsPS;        // удаление мероприятий пользователя
-    //    private static PreparedStatement insertEventsPS;        // вставка мероприятий пользователя
-    //
-    //    private static PreparedStatement[] getUsersEventsTypePS;  // получение пользователей с их мероприятиями
 }

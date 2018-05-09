@@ -52,7 +52,7 @@ public class DBWorker
     }
 
 
-    private static ComboPooledDataSource dataSource;
+    private static ComboPooledDataSource dataSource;    // пул потоков
 
     private static final String URL = "jdbc:mysql://localhost:3306/hse_life_database?characterEncoding=utf8&autoReconnect=true&useSSL=false";
     private static final String USER = "root";

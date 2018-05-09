@@ -36,7 +36,7 @@ public class TaskSpreader
             message.setChatId(chatId);
 
             // Отправка сообщения
-            Bot.MessageSender.send(message);
+            Bot.sendM(message);
         });
     }
 

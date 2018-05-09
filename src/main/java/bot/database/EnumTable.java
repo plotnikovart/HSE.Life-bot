@@ -21,28 +21,6 @@ public class EnumTable
     {
         EnumTable.dataSource = dataSource;
 
-//        // Инициализация шаблонов запросов
-//        getUniversityListPS = connection.prepareStatement("SELECT name FROM university_list ORDER BY name");
-//        getEventTypeListPS = connection.prepareStatement("SELECT name FROM event_type_list ORDER BY name");
-//        getTimeListPS = connection.prepareStatement("SELECT time FROM time_list ORDER BY time");
-//
-//        checkPS = connection.prepareStatement("SELECT status FROM change_list WHERE table_name = ? AND status = TRUE");
-//        updateStatusPS = connection.prepareStatement("UPDATE change_list SET status = FALSE WHERE table_name = ?");
-//
-//        getNextTimeIndexPS = connection.prepareStatement("(SELECT *" +
-//                " FROM time_list" +
-//                " WHERE time > NOW()" +
-//                " ORDER BY time)" +
-//                "UNION" +
-//                "(SELECT *" +
-//                " FROM time_list" +
-//                " ORDER BY time)");
-//
-//        getTimePS = connection.prepareStatement("SELECT time FROM time_list WHERE id = ?");
-//
-//        getUniversityIndexesPS = connection.prepareStatement("SELECT id FROM university_list");
-//
-//        getEverydayImagePS = connection.prepareStatement("SELECT refference FROM everyday_images WHERE day_of_week = WEEKDAY(NOW())");
         // Загрузка данных
         loadUniversity();
         loadEventType();
@@ -196,7 +174,6 @@ public class EnumTable
 
     /**
      * Обновление списка университетов
-     * @throws SQLException Ошибка при обновлении
      */
     private static void loadUniversity()
     {
@@ -223,7 +200,6 @@ public class EnumTable
 
     /**
      * Обновление списка типов мероприятий
-     * @throws SQLException Ошибка при обновлении
      */
     private static void loadEventType()
     {
@@ -250,7 +226,6 @@ public class EnumTable
 
     /**
      * Обновление списка времен
-     * @throws SQLException Ошибка при обновлении
      */
     private static void loadTime()
     {
@@ -309,7 +284,7 @@ public class EnumTable
     private static volatile ArrayList<String> eventsTypeList;       // типы мероприятий
     private static volatile ArrayList<String> timeList;             // времена
 
-    private static ComboPooledDataSource dataSource;
+    private static ComboPooledDataSource dataSource;                // пул коннекторов
 
     // Шаблоны запросов
 
@@ -325,37 +300,21 @@ public class EnumTable
 
     private static final String GET_NEXT_TIME_INDEX =               // получение индекса следующего времени
             "(SELECT *" +
-            " FROM time_list" +
-            " WHERE time > NOW()" +
-            " ORDER BY time)" +
-            "UNION" +
-            "(SELECT *" +
-            " FROM time_list" +
-            " ORDER BY time)";
+                    " FROM time_list" +
+                    " WHERE time > NOW()" +
+                    " ORDER BY time)" +
+                    "UNION" +
+                    "(SELECT *" +
+                    " FROM time_list" +
+                    " ORDER BY time)";
     private static final String GET_TIME =                          // получение времени по индексу
             "SELECT time FROM time_list WHERE id = ?";
 
     private static final String GET_EVERYDAY_IMAGE =                // получение картинки на каждый день
             "SELECT refference FROM everyday_images WHERE day_of_week = WEEKDAY(NOW())";
 
-    private static final String CHECK =                             // проверка на изменение университетов/типов
-            // мероприятий/времени
+    private static final String CHECK =                             // проверка на изменение университетов/типов мероприятий/времени
             "SELECT status FROM change_list WHERE table_name = ? AND status = TRUE";
-    private static final String UPDATE_STATUS =                     // обновление университетов/типов
-            // мероприятий/времени
+    private static final String UPDATE_STATUS =                     // обновление университетов/типов мероприятий/времени
             "UPDATE change_list SET status = FALSE WHERE table_name = ?";
-//
-//    private static PreparedStatement getUniversityListPS;           // получение университетов
-//    private static PreparedStatement getEventTypeListPS;            // получение типов мероприятий
-//    private static PreparedStatement getTimeListPS;                 // получение времен
-//
-//    private static PreparedStatement getUniversityIndexesPS;        // получение индексов университетов
-//
-//    private static PreparedStatement getNextTimeIndexPS;            // получение индекса следующего времени
-//    private static PreparedStatement getTimePS;                     // получение времени по индексу
-//
-//    private static PreparedStatement getEverydayImagePS;            // получение картинки на каждый день
-//
-//    private static PreparedStatement checkPS;                       // проверка на изменение
-//    private static PreparedStatement updateStatusPS;                // обновление университетов/типов мероприятий/времени
 }

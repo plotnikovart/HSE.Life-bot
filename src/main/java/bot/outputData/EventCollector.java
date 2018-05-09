@@ -40,7 +40,7 @@ public class EventCollector implements Runnable
                 LinkedList<Integer> universityIndexes = EnumTable.getUniversityIndexes();
 
                 // Ожидание следующего времени для отправки подборки
-                //Thread.sleep(countTimeForNextMessage(timeIndex));
+                Thread.sleep(countTimeForNextMessage(timeIndex));
 
                 Vector<Callable<Void>> tasks = new Vector<>();
                 // Добавление задач для генерирования подборок
@@ -48,14 +48,13 @@ public class EventCollector implements Runnable
                 {
                     tasks.add(() ->
                     {
-                        UserGroups ug = new UserGroups(universityIndex, 4);
+                        UserGroups ug = new UserGroups(universityIndex, timeIndex);
                         ActualUniversityEvents aue = new ActualUniversityEvents(universityIndex);
 
                         // Если группа не пустая и есть мероприятия, то запускаем сортировщик
                         if (!aue.isEmpty() && !ug.isEmpty())
                         {
                             ArticlesSorter.set(aue, ug);
-                            System.out.println(universityIndex);
                         }
 
                         return null;
@@ -64,8 +63,6 @@ public class EventCollector implements Runnable
 
                 // Выполнение и ожидание завершения задач
                 threadPool.invokeAll(tasks);
-                Thread.sleep(1333333333);
-                //threadPool.awaitTermination();
 
                 // Удаление неактуальных мероприятий
                 EventsTable.deleteOldEvents();
@@ -88,6 +85,11 @@ public class EventCollector implements Runnable
         LocalTime messageTime = EnumTable.getTime(timeIndex);
         LocalTime currentTime = LocalTime.now();
 
+        if (messageTime == null)
+        {
+            return Integer.MAX_VALUE;
+        }
+
         int result;
         if (currentTime.compareTo(messageTime) > 0)
         {
@@ -105,6 +107,5 @@ public class EventCollector implements Runnable
         return result * 1000;
     }
 
-    // Пул потоков
-    private static ExecutorService threadPool;
+    private ExecutorService threadPool;     // пул потоков
 }

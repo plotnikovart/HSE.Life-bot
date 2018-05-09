@@ -2,16 +2,14 @@ package bot;
 
 import bot.inputData.TaskSpreader;
 
-import bot.outputData.MessageConstructor;
 import org.telegram.telegrambots.api.methods.send.SendMessage;
 import org.telegram.telegrambots.api.objects.Update;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.exceptions.TelegramApiException;
-import org.telegram.telegraph.exceptions.TelegraphException;
 
 
 /**
- * Класс, представляющий собой бота
+ * Класс, представляющий собой бота. Служит для принятия и отправки сообщений
  */
 public class Bot extends TelegramLongPollingBot
 {
@@ -19,7 +17,7 @@ public class Bot extends TelegramLongPollingBot
     {
         super();
         taskSpreader = new TaskSpreader();  // инициализация распределителя задач
-        MessageSender.initialize(this);
+        Bot.bot = this;
     }
 
     @Override
@@ -59,43 +57,41 @@ public class Bot extends TelegramLongPollingBot
         return botToken;
     }
 
+
     /**
-     * Класс для отправки сообщений
+     * Отправка сообщения
+     * @param chatId id пользователя
+     * @param message Текст сообщения
      */
-    public static class MessageSender
+    public static void sendM(long chatId, String message)
     {
-        static private Bot bot;
+        SendMessage sendMessage = new SendMessage();
+        sendMessage.setText(message);
+        sendMessage.enableMarkdown(true);
+        sendMessage.setParseMode("markdown");
+        sendMessage.setChatId(chatId);
 
-        static void initialize(Bot bot)
+        sendM(sendMessage);
+    }
+
+    /**
+     * Отправка сообщения
+     * @param message Готовое сообщение
+     */
+    public static void sendM(SendMessage message)
+    {
+        try
         {
-            MessageSender.bot = bot;
+            bot.execute(message);
         }
-
-        public static void send(long chatId, String message)
+        catch (TelegramApiException e)
         {
-            SendMessage sendMessage = new SendMessage();
-            sendMessage.setText(message);
-            sendMessage.enableMarkdown(true);
-            sendMessage.setParseMode("markdown");
-            sendMessage.setChatId(chatId);
-
-            send(sendMessage);
-        }
-
-        public static void send(SendMessage message)
-        {
-            try
-            {
-                bot.execute(message);
-            }
-            catch (TelegramApiException e)
-            {
-                e.printStackTrace();
-            }
+            e.printStackTrace();
         }
     }
 
-    private TaskSpreader taskSpreader;
+    static private Bot bot;                         // ссылка на бота
+    private TaskSpreader taskSpreader;              // распределитель задач
     private final String botName = "HSE.Life bot";
     private final String botToken = "456367182:AAEUOD9XomIQhwHz7zT4cQ--2uBp7ts6Wxo";
 }

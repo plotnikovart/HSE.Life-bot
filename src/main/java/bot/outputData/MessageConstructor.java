@@ -1,10 +1,7 @@
 package bot.outputData;
 
-import bot.Bot;
 import bot.database.EnumTable;
 import bot.inputData.Event;
-import org.telegram.telegrambots.api.methods.send.SendMessage;
-import org.telegram.telegrambots.exceptions.TelegramApiException;
 import org.telegram.telegraph.ExecutorOptions;
 import org.telegram.telegraph.TelegraphContext;
 import org.telegram.telegraph.TelegraphContextInitializer;
@@ -25,11 +22,8 @@ import java.util.logging.Level;
  */
 public class MessageConstructor
 {
-    private static Account account;     // зарегистрированый аккаунт в Telegraph
-
     /**
      * Инициализирует Telegraph.Api и регистрирует аккаунт в Telegraph
-     * @param bot Ссылка на бота
      * @throws TelegraphException Если не удалось зарегистрировать аккаунт
      */
     public static void initialize() throws TelegraphException
@@ -186,6 +180,7 @@ public class MessageConstructor
         }
         catch (ParseException e)
         {
+            e.printStackTrace();
         }
 
         // Время
@@ -251,6 +246,9 @@ public class MessageConstructor
         map.put("src", url);
         return new NodeElement("img", map, null);
     }
+
+
+    private static Account account;     // зарегистрированый аккаунт в Telegraph
 
     // Формат месяцев
     private static SimpleDateFormat dateFormat = new SimpleDateFormat("d MMMM", new DateFormatSymbols()

@@ -18,17 +18,6 @@ public class EventsTable
     static void initialize(ComboPooledDataSource dataSource)
     {
         EventsTable.dataSource = dataSource;
-//        // Инициализация шаблонов запросов
-//        insertPS = connection.prepareStatement();
-//
-//        getEventsPS = new PreparedStatement[5];
-//        for (int i = 0; i < 5; i++)
-//        {
-//            getEventsPS[i] = connection.prepareStatement("SELECT  name, description, university, type, photo, refference, DATE(datetime) date, TIME(datetime) time, place " +
-//                    "FROM events " +
-//                    "WHERE checked = TRUE && university = ? && (datetime >= NOW()) " +
-//                    "ORDER BY datetime");
-//        }
     }
 
     /**
@@ -85,24 +74,39 @@ public class EventsTable
         }
     }
 
-    public static void deleteOldEvents(){
-
+    /**
+     * Удаление старых мероприятий
+     */
+    public static void deleteOldEvents()
+    {
+        try (Connection connection = dataSource.getConnection())
+        {
+            connection.createStatement().execute(DELETE_OLD_EVENTS);
+        }
+        catch (SQLException e)
+        {
+            e.printStackTrace();
+        }
     }
 
 
     private static ComboPooledDataSource dataSource;
 
     // Шаблоны запросов
-    private static final String INSERT =            // добавление нового мероприятия
-            "INSERT INTO events (name, description, university, type, photo, refference, datetime, place) " +
-            "VALUES (?, ?, " +
-            "(SELECT id FROM university_list WHERE name = ?), " +
-            "(SELECT id FROM event_type_list WHERE name = ?), " +
-            "?, ?, ?, ?)";
+    private static final String INSERT =                // добавление нового мероприятия
+            "INSERT INTO events (name, description, university, type, photo, reference, datetime, place) " +
+                    "VALUES (?, ?, " +
+                    "(SELECT id FROM university_list WHERE name = ?), " +
+                    "(SELECT id FROM event_type_list WHERE name = ?), " +
+                    "?, ?, ?, ?)";
 
-    private static final String GET_EVENTS =        // получение мероприятий из одного университета
-            "SELECT  name, description, university, type, photo, refference, DATE(datetime) date, TIME(datetime) time, place " +
-            "FROM events " +
-            "WHERE checked = TRUE && university = ? && (datetime >= NOW()) " +
-            "ORDER BY datetime";
+    private static final String GET_EVENTS =            // получение мероприятий из одного университета
+            "SELECT  name, description, university, type, photo, reference, DATE(datetime) date, TIME(datetime) time, place " +
+                    "FROM events " +
+                    "WHERE checked = TRUE && university = ? && (datetime >= NOW()) " +
+                    "ORDER BY datetime";
+
+    private static final String DELETE_OLD_EVENTS =     // удаление старых мероприятий
+            "DELETE FROM events " +
+                    "WHERE datetime < NOW()";
 }

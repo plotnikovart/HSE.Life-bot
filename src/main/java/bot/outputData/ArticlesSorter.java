@@ -53,7 +53,7 @@ class ArticlesSorter
             // Отправка сообщения пользователям
             for (Long userId : userGroup.getUsersList())
             {
-                Bot.MessageSender.send(userId, messageText);
+                Bot.sendM(userId, messageText);
             }
 
             // Очистка мероприятий для данной группы пользователей

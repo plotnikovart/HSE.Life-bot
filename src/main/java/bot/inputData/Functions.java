@@ -26,7 +26,7 @@ class Functions
     static final String INPUT = "input";
 
     static final String B000 = "\uD83C\uDFDB Ваш ВУЗ";
-    static final String B001 = "\uD83E\uDD47 Приорететные мероприятия";
+    static final String B001 = "\uD83E\uDD47 Приоритетные мероприятия";
     static final String B002 = "⏰ Время для получения подборки";
 
     static final String B003 = "❎ Отменить";
