@@ -16,7 +16,7 @@ import java.util.LinkedList;
 class ActualUniversityEvents implements Iterable<Event>
 {
     /**
-     * Инициализаця списка с актуальными мероприятиями
+     * Инициализация списка с актуальными мероприятиями
      * @param universityIndex Индекс университета
      */
     ActualUniversityEvents(int universityIndex)
@@ -67,9 +67,13 @@ class ActualUniversityEvents implements Iterable<Event>
         return events.isEmpty();
     }
 
-    // Список с актуальными мероприятиями
-    private LinkedList<Event> events;
 
+    private LinkedList<Event> events;   // список с актуальными мероприятиями
+
+    /**
+     * Получение итератора для данной коллекции
+     * @return Итератор
+     */
     @Override
     public Iterator<Event> iterator()
     {

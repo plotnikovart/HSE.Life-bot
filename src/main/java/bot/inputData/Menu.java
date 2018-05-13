@@ -60,7 +60,7 @@ class Menu
         inputMenuItem = new MenuItem(Functions.INPUT, b012, 0, Functions::inputUniversityE, true);
 
         // Выбор тематики мероприятия
-        MenuItem b013 = new MenuItem(Functions.B013, b01, 1, Functions::setEventsE, true);
+        MenuItem b013 = new MenuItem(Functions.B013, b01, 1, Functions::setEventE, true);
         inputMenuItem = new MenuItem(Functions.INPUT, b013, 0, Functions::inputEvent, true);
 
         // Ссылка на фотографию
@@ -68,8 +68,8 @@ class Menu
         inputMenuItem = new MenuItem(Functions.INPUT, b014, 0, Functions::inputPhoto, true);
 
         // Ссылка на пост
-        MenuItem b015 = new MenuItem(Functions.B015, b01, 1, Functions::setLink, true);
-        inputMenuItem = new MenuItem(Functions.INPUT, b015, 0, Functions::inputLink, true);
+        MenuItem b015 = new MenuItem(Functions.B015, b01, 1, Functions::setReference, true);
+        inputMenuItem = new MenuItem(Functions.INPUT, b015, 0, Functions::inputReference, true);
 
         // Дата
         MenuItem b016 = new MenuItem(Functions.B016, b01, 1, Functions::setData, true);

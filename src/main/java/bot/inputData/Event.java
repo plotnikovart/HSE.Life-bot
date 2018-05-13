@@ -155,31 +155,35 @@ public class Event
      */
     String getInfo()
     {
-        String info = "";
+        StringBuilder info = new StringBuilder();
         for (int i = 0; i < PARAM_NUMBER; i++)
         {
             if (params[i] != null)
             {
-                info += '*' + paramsName[i] + ":* " + params[i] + '\n';
+                info.append('*').append(paramsName[i]).append(":* ").append(params[i]).append('\n');
             }
         }
 
-        return info;
+        return info.toString();
     }
 
+    /**
+     * Загрузка мероприятия в БД
+     * @throws SQLException Если не все параметры были заполнены, если были введены некорректные данные
+     */
     void downloadToDatabase() throws SQLException
     {
         // Проверка, введены ли все данные (время и место необязательны)
-        String absentParams = "Вы не добавили:\n\n";
+        StringBuilder absentParams = new StringBuilder("\"Вы не добавили:\\n\\n\"");
         for (int i = 0; i < 7; i++)
         {
             if (params[i] == null)
             {
-                absentParams += '*' + paramsName[i] + '*' + "\n";
+                absentParams.append('*').append(paramsName[i]).append("*\n");
             }
         }
 
-        if (absentParams.equals("Вы не добавили:\n\n"))
+        if (absentParams.toString().equals("Вы не добавили:\n\n"))
         {
             try
             {
@@ -193,14 +197,14 @@ public class Event
         }
         else
         {
-            absentParams += "\nПожулуйста, добавьте недостающие параметры";
-            throw new SQLException(absentParams);
+            absentParams.append("\nПожулуйста, добавьте недостающие параметры");
+            throw new SQLException(absentParams.toString());
         }
     }
 
     public static final int PARAM_NUMBER = 9;       // количество параметров
     private String[] params;                        // значения параметров
-    static private String[] paramsName = {"Название", "Описание", "Университет", "Тематика", "Ссылка на фотографию",
+    private static String[] paramsName = {"Название", "Описание", "Университет", "Тематика", "Ссылка на фотографию",
             "Ссылка на пост", "Дата", "Время", "Место"};
     // 0 - name
     // 1 - description

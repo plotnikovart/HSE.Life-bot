@@ -102,9 +102,13 @@ class UserGroups implements Iterable<UserGroup>
         return groups.isEmpty();
     }
 
-    // Контейнер. Содержит значения групп пользователей и сами группы
-    private TreeMap<BigInteger, UserGroup> groups;
 
+    private TreeMap<BigInteger, UserGroup> groups;  // контейнер, содержит значения групп пользователей и сами группы
+
+    /**
+     * Получение итератора для данной коллекции
+     * @return Итератор
+     */
     @Override
     public Iterator<UserGroup> iterator()
     {

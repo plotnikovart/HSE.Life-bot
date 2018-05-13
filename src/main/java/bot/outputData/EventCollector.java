@@ -1,6 +1,5 @@
 package bot.outputData;
 
-
 import bot.database.EnumTable;
 import bot.database.EventsTable;
 
@@ -8,7 +7,6 @@ import java.time.LocalTime;
 import java.util.LinkedList;
 import java.util.Vector;
 import java.util.concurrent.Callable;
-
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -18,7 +16,7 @@ import java.util.concurrent.Executors;
 public class EventCollector implements Runnable
 {
     /**
-     * Инициализирует необходимые поля
+     * Инициализирует пул потоков, запускает сборщик в отдельном потоке
      */
     public EventCollector()
     {
@@ -28,6 +26,9 @@ public class EventCollector implements Runnable
         thread.start();
     }
 
+    /**
+     * Запуск сборщика мероприятий в отдельном потоке
+     */
     @Override
     public void run()
     {
@@ -51,7 +52,7 @@ public class EventCollector implements Runnable
                         UserGroups ug = new UserGroups(universityIndex, 4);
                         ActualUniversityEvents aue = new ActualUniversityEvents(universityIndex);
 
-                        // Если группа не пустая и есть мероприятия, то запускаем сортировщик
+                        // Если группа не пустая и есть мероприятия, то передаем в сортировщик
                         if (!aue.isEmpty() && !ug.isEmpty())
                         {
                             ArticlesSorter.set(aue, ug);
@@ -74,7 +75,6 @@ public class EventCollector implements Runnable
             }
         }
     }
-
 
     /**
      * Подсчет времени до следующего сообщения

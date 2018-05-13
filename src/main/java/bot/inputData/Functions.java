@@ -485,7 +485,7 @@ class Functions
     /**
      * Пункт B013. Выбор типа мероприятия
      */
-    static SendMessage setEventsE(long userId, String... messageText)
+    static SendMessage setEventE(long userId, String... messageText)
     {
         if (setEventsEM != null && !EnumTable.isChanged("event_type_list"))
         {
@@ -546,7 +546,7 @@ class Functions
     /**
      * Пункт B015. Добавление ссылки на пост
      */
-    static SendMessage setLink(long userId, String... messageText)
+    static SendMessage setReference(long userId, String... messageText)
     {
         SendMessage message = new SendMessage();
         message.setText("Добавьте ссылку на пост в социальной сети");
@@ -557,7 +557,7 @@ class Functions
     /**
      * Ввод ссылки на пост
      */
-    static SendMessage inputLink(long userId, String... messageText)
+    static SendMessage inputReference(long userId, String... messageText)
     {
         Events.setEventParam(5, messageText[0], userId);
 
