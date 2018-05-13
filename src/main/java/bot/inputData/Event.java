@@ -174,7 +174,7 @@ public class Event
     void downloadToDatabase() throws SQLException
     {
         // Проверка, введены ли все данные (время и место необязательны)
-        StringBuilder absentParams = new StringBuilder("\"Вы не добавили:\\n\\n\"");
+        StringBuilder absentParams = new StringBuilder("Вы не добавили:\n\n");
         for (int i = 0; i < 7; i++)
         {
             if (params[i] == null)

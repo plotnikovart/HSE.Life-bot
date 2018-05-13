@@ -311,7 +311,7 @@ public class EnumTable
             "SELECT time FROM time_list WHERE id = ?";
 
     private static final String GET_EVERYDAY_IMAGE =                // получение картинки на каждый день
-            "SELECT reference FROM everyday_images WHERE day_of_week = WEEKDAY(NOW())";
+            "SELECT reference FROM everyday_images WHERE day_of_week = WEEKDAY(NOW()) + 1";
 
     private static final String CHECK =                             // проверка на изменение университетов/типов мероприятий/времени
             "SELECT status FROM change_list WHERE table_name = ? AND status = TRUE";
