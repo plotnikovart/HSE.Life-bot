@@ -13,6 +13,9 @@ import org.telegram.telegrambots.exceptions.TelegramApiException;
  */
 public class Bot extends TelegramLongPollingBot
 {
+    /**
+     * Инициализация бота, создание распределителя задач
+     */
     Bot()
     {
         super();
@@ -20,6 +23,10 @@ public class Bot extends TelegramLongPollingBot
         Bot.bot = this;
     }
 
+    /**
+     * Медод для получения сообщений
+     * @param update Полученное обновление от пользователя
+     */
     @Override
     public void onUpdateReceived(Update update)
     {
@@ -45,12 +52,20 @@ public class Bot extends TelegramLongPollingBot
         }
     }
 
+    /**
+     * Геттер
+     * @return Имя бота в сети
+     */
     @Override
     public String getBotUsername()
     {
         return botName;
     }
 
+    /**
+     * Геттер
+     * @return Токен бота
+     */
     @Override
     public String getBotToken()
     {

@@ -11,6 +11,9 @@ import org.telegram.telegraph.exceptions.TelegraphException;
 import java.beans.PropertyVetoException;
 
 
+/**
+ * Класс для инициализации ресурсов программы
+ */
 public class Initializer
 {
     public static void main(String[] args)
