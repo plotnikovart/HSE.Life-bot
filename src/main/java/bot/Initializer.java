@@ -16,6 +16,10 @@ import java.beans.PropertyVetoException;
  */
 public class Initializer
 {
+    /**
+     * Точка входа в программу
+     * @param args Программные аргументы
+     */
     public static void main(String[] args)
     {
         try
