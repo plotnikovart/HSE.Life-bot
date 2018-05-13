@@ -1,5 +1,6 @@
 package bot;
 
+import bot.database.DBWorker;
 import bot.inputData.TaskSpreader;
 
 import org.telegram.telegrambots.api.methods.send.SendMessage;

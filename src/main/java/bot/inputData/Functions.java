@@ -44,16 +44,16 @@ class Functions
     static final String B019 = "\uD83D\uDD0E Посмотреть введенные данные \uD83D\uDD0D";
 
     // Готовые шаблоны "тяжелых" сообщений
-    private static volatile SendMessage startM;
+    private static volatile SendMessage startM;             // стартовое сообщение
 
-    private static volatile SendMessage tuneEventsM;
-    private static volatile SendMessage setUniversityM;
-    private static volatile SendMessage setEventsM;
-    private static volatile SendMessage setTimeM;
+    private static volatile SendMessage tuneEventsM;        // настройка мероприятий
+    private static volatile SendMessage setUniversityM;     // список университетов
+    private static volatile SendMessage setEventsM;         // список тематик
+    private static volatile SendMessage setTimeM;           // список времен
 
-    private static volatile SendMessage offerEventM;
-    private static volatile SendMessage setUniversityEM;
-    private static volatile SendMessage setEventsEM;
+    private static volatile SendMessage offerEventM;        // предложение мероприятия
+    private static volatile SendMessage setUniversityEM;    // список университетов
+    private static volatile SendMessage setEventsEM;        // список мероприятий
 
 
     /**

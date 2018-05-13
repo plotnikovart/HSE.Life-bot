@@ -133,7 +133,7 @@ class Menu
             else
             {
                 // Пользователь находится в состоянии ввода информации
-                if (current.getInput())
+                if (current.isInputItem())
                 {
                     // Не переходим на следующий пункт, но передаем в input функцию сообщение
                     return current.next(message).action(userId, message);
@@ -226,7 +226,7 @@ class MenuItem
      * Получение типа пункта
      * @return Для ввода или нет
      */
-    boolean getInput()
+    boolean isInputItem()
     {
         return input;
     }
@@ -244,7 +244,7 @@ class MenuItem
     private boolean input;                      // флаг, показывающий это меню для ввода информации или нет
 
     private Function func;                      // действие при переходе в этот пункт
-    private MenuItem father;                    // сслыка на родителя
+    private MenuItem father;                    // ссылка на родителя
     private HashMap<String, MenuItem> children; // дети
 }
 

@@ -12,7 +12,7 @@ import java.sql.*;
 public class EventsTable
 {
     /**
-     * Иницализация коннектора к базе и шаблонов запросов
+     * Иницализация коннектора к базе
      * @param dataSource Пул коннекторов к БД
      */
     static void initialize(ComboPooledDataSource dataSource)
@@ -99,7 +99,7 @@ public class EventsTable
     }
 
 
-    private static ComboPooledDataSource dataSource;
+    private static ComboPooledDataSource dataSource;    // пул коннекторов
 
     // Шаблоны запросов
     private static final String INSERT =                // добавление нового мероприятия

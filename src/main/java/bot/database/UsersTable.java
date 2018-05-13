@@ -11,7 +11,7 @@ import java.util.List;
 public class UsersTable
 {
     /**
-     * Иницализация коннектора к базе и шаблонов запросов
+     * Иницализация коннектора к базе
      * @param dataSource Пул соединений к БД
      */
     static void initialize(ComboPooledDataSource dataSource)
@@ -127,7 +127,7 @@ public class UsersTable
     /**
      * Проверка, содержится ли пользователь в базе
      * @param id Уникальный идентификатор пользователя в Telegram
-     * @return Сдержится или нет
+     * @return Содержится или нет
      * @throws SQLException Ошибка обращения к БД
      */
     private static boolean isContained(long id, Connection connection) throws SQLException
