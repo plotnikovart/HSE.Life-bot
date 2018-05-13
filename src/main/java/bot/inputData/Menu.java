@@ -15,7 +15,7 @@ class Menu
      */
     Menu()
     {
-        // todo кнопка администратора
+        // todo пункт меню для администратора
 
         // Основные пункты меню
         MenuItem b0 = new MenuItem(Functions.B0, null, 1, Functions::start, false);

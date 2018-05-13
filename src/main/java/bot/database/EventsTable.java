@@ -43,7 +43,16 @@ public class EventsTable
             }
 
             // Вставка даты и времени
-            insertPS.setString(i + 1, parameters[i] + " " + parameters[i + 1]);
+            String dataTime = parameters[i];
+            if (parameters[i + 1] != null)
+            {
+                dataTime += " " + parameters[i + 1];
+            }
+            else    // Пустое время
+            {
+                dataTime += " " + "00:00:01";
+            }
+            insertPS.setString(i + 1, dataTime);
 
             // Место
             i++;
@@ -100,6 +109,7 @@ public class EventsTable
                     "(SELECT id FROM event_type_list WHERE name = ?), " +
                     "?, ?, ?, ?)";
 
+    // todo ограничение плюс неделя
     private static final String GET_EVENTS =            // получение мероприятий из одного университета
             "SELECT  name, description, university, type, photo, reference, DATE(datetime) date, TIME(datetime) time, place " +
                     "FROM events " +

@@ -184,7 +184,7 @@ public class MessageConstructor
         }
 
         // Время
-        if (params[7] != null)
+        if (!params[7].equals("00:00:01"))
         {
             allContent.add(addNodeContent("\uD83D\uDD54 " + params[7].substring(0, 5), "p"));
         }

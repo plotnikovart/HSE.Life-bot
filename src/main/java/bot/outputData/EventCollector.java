@@ -40,7 +40,7 @@ public class EventCollector implements Runnable
                 LinkedList<Integer> universityIndexes = EnumTable.getUniversityIndexes();
 
                 // Ожидание следующего времени для отправки подборки
-                Thread.sleep(countTimeForNextMessage(timeIndex));
+                //Thread.sleep(countTimeForNextMessage(timeIndex));
 
                 Vector<Callable<Void>> tasks = new Vector<>();
                 // Добавление задач для генерирования подборок
@@ -48,7 +48,7 @@ public class EventCollector implements Runnable
                 {
                     tasks.add(() ->
                     {
-                        UserGroups ug = new UserGroups(universityIndex, timeIndex);
+                        UserGroups ug = new UserGroups(universityIndex, 4);
                         ActualUniversityEvents aue = new ActualUniversityEvents(universityIndex);
 
                         // Если группа не пустая и есть мероприятия, то запускаем сортировщик
@@ -63,6 +63,7 @@ public class EventCollector implements Runnable
 
                 // Выполнение и ожидание завершения задач
                 threadPool.invokeAll(tasks);
+                Thread.sleep(30000000);
 
                 // Удаление неактуальных мероприятий
                 EventsTable.deleteOldEvents();

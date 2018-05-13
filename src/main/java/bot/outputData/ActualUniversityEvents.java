@@ -39,6 +39,7 @@ class ActualUniversityEvents implements Iterable<Event>
                 {
                     params[i] = resultSet.getString(i + 1);
                 }
+
                 events.add(new Event(params));
             }
         }
