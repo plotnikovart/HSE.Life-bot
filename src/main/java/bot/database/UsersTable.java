@@ -31,6 +31,8 @@ public class UsersTable
     {
         try (Connection connection = dataSource.getConnection())
         {
+            System.out.println(Thread.currentThread());
+
             // Если пользователь уже есть в БД
             if (isContained(id, connection))
             {

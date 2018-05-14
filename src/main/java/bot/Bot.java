@@ -75,7 +75,7 @@ public class Bot extends TelegramLongPollingBot
 
     /**
      * Отправка сообщения
-     * @param chatId id пользователя
+     * @param chatId  id пользователя
      * @param message Текст сообщения
      */
     public static void sendM(long chatId, String message)
@@ -97,7 +97,10 @@ public class Bot extends TelegramLongPollingBot
     {
         try
         {
-            bot.execute(message);
+            synchronized (Bot.bot)
+            {
+                bot.execute(message);
+            }
         }
         catch (TelegramApiException e)
         {
@@ -105,7 +108,7 @@ public class Bot extends TelegramLongPollingBot
         }
     }
 
-    static private Bot bot;                         // ссылка на бота
+    static private volatile Bot bot;                // ссылка на бота
     private TaskSpreader taskSpreader;              // распределитель задач
     private final String botName = "HSE.Life bot";
     private final String botToken = "456367182:AAEUOD9XomIQhwHz7zT4cQ--2uBp7ts6Wxo";

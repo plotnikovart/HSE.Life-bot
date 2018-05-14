@@ -240,7 +240,7 @@ class MenuItem
         children.put(child.name, child);
     }
 
-    private String name;                        // имя пункта меню
+     String name;                        // имя пункта меню
     private boolean input;                      // флаг, показывающий это меню для ввода информации или нет
 
     private Function func;                      // действие при переходе в этот пункт
