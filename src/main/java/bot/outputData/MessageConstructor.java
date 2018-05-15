@@ -43,8 +43,8 @@ public class MessageConstructor
 
     /**
      * Оборачивает статью Telegraph в сообщение
-     * @param priorityEvents   Приоритетные мероприятия
-     * @param otherEvents      Остальные мероприятия
+     * @param priorityEvents Приоритетные мероприятия
+     * @param otherEvents    Остальные мероприятия
      * @return Готовое для отправки сообщение
      */
     static String generateMessage(LinkedList<Event> priorityEvents, LinkedList<Event> otherEvents)
@@ -136,7 +136,7 @@ public class MessageConstructor
             int day = c.get(Calendar.DAY_OF_WEEK);
 
             // Регистрация страницы в Telegraph
-            Page page = new CreatePage(account.getAccessToken(), dayOfWeek[day], allContent)
+            Page page = new CreatePage(account.getAccessToken(), dayOfWeek[day - 1], allContent)
                     .setAuthorName("HSE.Life")
                     .setAuthorUrl("https://t.me/hse_life")
                     .execute();
@@ -173,15 +173,7 @@ public class MessageConstructor
         allContent.add(addNodeContent(null, "br"));
 
         // Дата
-        try
-        {
-            Date date = new SimpleDateFormat("yyyy-mm-dd").parse(params[6]);
-            allContent.add(addNodeContent("📆 " + dateFormat.format(date), "p"));
-        }
-        catch (ParseException e)
-        {
-            e.printStackTrace();
-        }
+        allContent.add(addNodeContent("📆 " + dateParse(params[6]), "p"));
 
         // Время
         if (!params[7].equals("00:00:01"))
@@ -247,21 +239,28 @@ public class MessageConstructor
         return new NodeElement("img", map, null);
     }
 
+    /**
+     * Парсер для правильного формата даты
+     * @param date Дата в формате yyyy-mm-dd
+     * @return Дата в формате dd месяц
+     */
+    private static String dateParse(String date)
+    {
+        int day = Integer.parseInt(date.substring(8, 10));
+        String month = months[Integer.parseInt((date.substring(5, 7))) - 1];
+
+        return day + " " + month;
+    }
+
 
     private static Account account;     // зарегистрированый аккаунт в Telegraph
 
-    // Формат месяцев
-    private static SimpleDateFormat dateFormat = new SimpleDateFormat("d MMMM", new DateFormatSymbols()
-    {
-        @Override
-        public String[] getMonths()
-        {
-            return new String[] {"января", "февраля", "марта", "апреля", "мая", "июня",
-                                 "июля", "августа", "сентября", "октября", "ноября", "декабря"};
-        }
-    });
+
+    // Месяцы
+    private static String[] months = {"января", "февраля", "марта", "апреля", "мая", "июня", "июля", "августа",
+                                      "сентября", "октября", "ноября", "декабря"};
 
     // Дни недели
-    private static String[] dayOfWeek = {"", "Воскресенье", "Понедельник", "Вторник", "Среда", "Четверг", "Пятница",
+    private static String[] dayOfWeek = {"Воскресенье", "Понедельник", "Вторник", "Среда", "Четверг", "Пятница",
                                          "Суббота"};
 }

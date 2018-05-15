@@ -113,8 +113,9 @@ public class EventsTable
     private static final String GET_EVENTS =            // получение мероприятий из одного университета
             "SELECT  name, description, university, type, photo, reference, DATE(datetime) date, TIME(datetime) time, place " +
                     "FROM events " +
-                    "WHERE checked = TRUE && university = ? && (datetime >= NOW()) " +
-                    "ORDER BY datetime";
+                    "WHERE checked = TRUE && university = ? && (datetime >= NOW()) && (datetime <= DATE_ADD(NOW(), " +
+                    "INTERVAL 1 WEEK)) " +
+                    "ORDER BY DATETIME";
 
     private static final String DELETE_OLD_EVENTS =     // удаление старых мероприятий
             "DELETE FROM events " +
