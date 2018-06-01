@@ -672,7 +672,7 @@ class Functions
      */
     static SendMessage discardChangesE(long userId, String... messageText)
     {
-        Events.deleteEvent(Integer.parseInt(messageText[1])); // удаление мероприятия из временного хранилища
+        Events.deleteEvent(userId); // удаление мероприятия из временного хранилища
 
         SendMessage message = new SendMessage();
         message.setText("Вы отменили добавление нового мероприятия!");
