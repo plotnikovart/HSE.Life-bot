@@ -97,14 +97,19 @@ public class Bot extends TelegramLongPollingBot
     {
         try
         {
-            synchronized (Bot.bot)
-            {
-                bot.execute(message);
-            }
+            bot.execute(message);
         }
         catch (TelegramApiException e)
         {
-            e.printStackTrace();
+            try
+            {
+                message.enableMarkdown(false);
+                bot.execute(message);
+            }
+            catch (TelegramApiException g)
+            {
+                g.printStackTrace();
+            }
         }
     }
 
