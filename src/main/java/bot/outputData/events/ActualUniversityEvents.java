@@ -1,4 +1,4 @@
-package bot.outputData;
+package bot.outputData.events;
 
 import bot.database.DBWorker;
 import bot.database.EventsTable;

@@ -109,7 +109,6 @@ public class EventsTable
                     "(SELECT id FROM event_type_list WHERE name = ?), " +
                     "?, ?, ?, ?)";
 
-    // todo ограничение плюс неделя
     private static final String GET_EVENTS =            // получение мероприятий из одного университета
             "SELECT  name, description, university, type, photo, reference, DATE(datetime) date, TIME(datetime) time, place " +
                     "FROM events " +

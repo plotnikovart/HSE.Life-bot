@@ -77,7 +77,7 @@ class Functions
             }
 
             startM = getMarkdownMessage();
-            startM.setText("Вы можете персонально *настроить* мероприятия, которые хотите получать.\n\nТакже вы можете *предложить* мероприятие для публикации");
+            startM.setText("❗*Настройте* мероприятия, которые вы хотите получать\n\n❗Также вы можете *предложить* мероприятие для публикации");
 
             ReplyKeyboardMarkup keyboardMarkup = new ReplyKeyboardMarkup();
             keyboardMarkup.setOneTimeKeyboard(true);
@@ -122,8 +122,8 @@ class Functions
             }
 
             tuneEventsM = getMarkdownMessage();
-            tuneEventsM.setText("Теперь настройте информацию под себя!\n" +
-                    "Укажите предпочтительную *тематику* мероприятий, свой *университет*, и *время* для получения подборок");
+            tuneEventsM.setText("Теперь настройте информацию для себя!\n\n" +
+                    "Укажите свой *университет*, предпочтительные *тематики* мероприятий, и *время* для получения подборок");
 
             // Inline keyboard
             InlineKeyboardMarkup markupInline = new InlineKeyboardMarkup();
@@ -175,7 +175,7 @@ class Functions
             }
 
             setUniversityM = new SendMessage();
-            setUniversityM.setText("Выберите ваш университет:\n");
+            setUniversityM.setText("Выберите ваш университет");
 
             addUniversities(setUniversityM);   // добавление в сообщение списка университетов
         }
@@ -212,7 +212,7 @@ class Functions
             }
 
             setEventsM = new SendMessage();
-            setEventsM.setText("Выберите темы мероприятий, которые будут показываться вам в начале подборки:");
+            setEventsM.setText("Выберите тематику мероприятий, которые будут показываться вам в начале подборки");
 
             addEvents(setEventsM);     // добавление в сообщение списка тем мероприятий
         }
@@ -230,8 +230,8 @@ class Functions
 
         SendMessage message = getMarkdownMessage();
         message.setText("Вы выбрали: *" + s + "*" +
-                "\n\nВы можете указать *несколько* мероприятий" +
-                "\nДля *отмены* еще раз нажмите на мероприятие");
+                "\n\n❗Вы можете указать *несколько* мероприятий" +
+                "\n❗Для *отмены* еще раз нажмите на мероприятие");
 
         addBackButton(message);
 
@@ -256,7 +256,7 @@ class Functions
             }
 
             setTimeM = new SendMessage();
-            setTimeM.setText("Выберите удобное время для получения подборки с мероприятиями:");
+            setTimeM.setText("Выберите удобное время для получения подборки с мероприятиями");
 
             // Inline keyboard
             InlineKeyboardMarkup markupInline = new InlineKeyboardMarkup();
@@ -325,7 +325,7 @@ class Functions
         }
         catch (SQLException e)
         {
-            message.setText("*Вы ввели некорректные данные*\nПожалуйста выбирайте информацию по кнопкам");
+            message.setText("*Вы ввели некорректные данные*\nПожалуйста, выбирайте информацию по кнопкам");
             addBackButton(message);
         }
 

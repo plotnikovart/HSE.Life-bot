@@ -1,4 +1,4 @@
-package bot.outputData;
+package bot.outputData.events;
 
 import bot.database.EnumTable;
 import bot.inputData.Event;

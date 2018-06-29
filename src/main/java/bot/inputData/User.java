@@ -181,7 +181,7 @@ class User
             eventsInfo += event + ", ";
         }
 
-        return eventsInfo.length() == 0 ? eventsInfo : eventsInfo.substring(0, eventsInfo.length() - 2);
+        return eventsInfo.length() == 0 ? "-" : eventsInfo.substring(0, eventsInfo.length() - 2);
     }
 
     /**

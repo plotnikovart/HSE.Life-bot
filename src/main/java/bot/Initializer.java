@@ -1,8 +1,8 @@
 package bot;
 
 import bot.database.DBWorker;
-import bot.outputData.EventCollector;
-import bot.outputData.MessageConstructor;
+import bot.outputData.events.EventCollector;
+import bot.outputData.events.MessageConstructor;
 import org.telegram.telegrambots.ApiContextInitializer;
 import org.telegram.telegrambots.TelegramBotsApi;
 import org.telegram.telegrambots.exceptions.TelegramApiException;

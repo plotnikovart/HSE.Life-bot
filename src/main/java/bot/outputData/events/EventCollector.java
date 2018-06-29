@@ -1,4 +1,4 @@
-package bot.outputData;
+package bot.outputData.events;
 
 import bot.database.EnumTable;
 import bot.database.EventsTable;
@@ -55,7 +55,7 @@ public class EventCollector implements Runnable
                         // Если группа не пустая и есть мероприятия, то передаем в сортировщик
                         if (!aue.isEmpty() && !ug.isEmpty())
                         {
-                            ArticlesSorter.set(aue, ug);
+                            EventSorter.set(aue, ug);
                         }
 
                         return null;

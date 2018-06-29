@@ -1,4 +1,4 @@
-package bot.outputData;
+package bot.outputData.events;
 
 import bot.Bot;
 import bot.inputData.Event;
@@ -9,7 +9,7 @@ import java.util.LinkedList;
 /**
  * Класс-сортировщик мероприятий
  */
-class ArticlesSorter
+class EventSorter
 {
     /**
      * Сортирует мероприятия университета по группам, для каждой группы определяет приоритетные и остальные мероприятия.
